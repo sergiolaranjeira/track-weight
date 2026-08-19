@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>10-Week Transformation Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --card-bg: rgba(22, 30, 46, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-border-hover: rgba(56, 189, 248, 0.3);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.15);
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.15);
+      --warning: #f59e0b;
+      --purple: #a855f7;
+      --purple-glow: rgba(168, 85, 247, 0.15);
+      --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.05) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      font-family: var(--font);
+      line-height: 1.4;
+      padding: 1rem;
+      max-width: 1320px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+
+    header {
+      margin-bottom: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      background: var(--accent-glow);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent);
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.725rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      width: fit-content;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle { color: var(--text-muted); font-size: 0.85rem; }
+
+    .dashboard-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 0.6rem;
+    }
+
+    .progress-title {
+      font-size: 0.775rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .progress-number { font-size: 1.25rem; font-weight: 800; color: var(--accent); }
+
+    .progress-track {
+      background: rgba(15, 23, 42, 0.8);
+      height: 12px;
+      border-radius: 9999px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+      padding: 2px;
+    }
+
+    .progress-fill {
+      background: linear-gradient(90deg, var(--accent) 0%, var(--success) 100%);
+      height: 100%;
+      width: 0%;
+      border-radius: 9999px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .controls-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .week-nav {
+      display: flex;
+      gap: 0.4rem;
+      overflow-x: auto;
+      padding-bottom: 0.4rem;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .week-nav::-webkit-scrollbar { display: none; }
+
+    .btn-week {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 0.55rem 0.9rem;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.825rem;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      font-family: var(--font);
+      flex-shrink: 0;
+    }
+
+    .btn-week.active {
+      background: var(--accent);
+      color: #090d16;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+
+    .action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .week-info-tag { font-size: 0.9rem; font-weight: 700; color: var(--text-main); }
+    .week-info-tag span { font-weight: 500; color: var(--text-muted); font-size: 0.8rem; display: block; }
+
+    .btn-reset {
+      background: transparent;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+      padding: 0.4rem 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-family: var(--font);
+      flex-shrink: 0;
+    }
+
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .day-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .day-card.completed-day {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.03);
+    }
+
+    .day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 0.75rem;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .day-title { font-size: 1.05rem; font-weight: 700; }
+    .day-date { font-size: 0.775rem; font-weight: 600; color: var(--accent); }
+
+    .header-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; }
+
+    .day-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid var(--card-border);
+    }
+
+    .day-card.completed-day .day-badge {
+      background: var(--success-glow);
+      color: var(--success);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .calorie-pill {
+      font-size: 0.725rem;
+      font-weight: 800;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+    
+    .calorie-pill.cheat {
+      background: var(--purple-glow);
+      color: var(--purple);
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+
+    .checklist { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.5rem;
+      border-radius: 10px;
+      cursor: pointer;
+      min-height: 44px;
+    }
+
+    .check-item:active { background: rgba(255, 255, 255, 0.05); }
+
+    .checkbox-custom {
+      position: relative;
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--text-dim);
+      border-radius: 6px;
+      background: rgba(15, 23, 42, 0.6);
+      cursor: pointer;
+      margin-top: 1px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .check-item input[type="checkbox"] { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
+
+    .check-item input[type="checkbox"]:checked ~ .checkbox-custom {
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    .checkbox-custom::after {
+      content: "";
+      position: absolute;
+      display: none;
+      width: 5px;
+      height: 9px;
+      border: solid #0b0f17;
+      border-width: 0 2.5px 2.5px 0;
+      transform: rotate(45deg);
+      margin-bottom: 2px;
+    }
+
+    .check-item input[type="checkbox"]:checked ~ .checkbox-custom::after { display: block; }
+    .item-content { flex-grow: 1; }
+
+    .item-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .item-cal { font-size: 0.7rem; color: var(--text-dim); font-weight: 700; }
+
+    .check-item input[type="checkbox"]:checked ~ .item-content .item-title {
+      color: var(--text-dim);
+      text-decoration: line-through;
+    }
+
+    .item-desc { font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.1rem; }
+
+    .section-divider { margin: 0.75rem 0; border-top: 1px dashed var(--card-border); }
+
+    /* Sunday Specials Styling */
+    .sunday-box {
+      background: rgba(168, 85, 247, 0.05);
+      border: 1px solid rgba(168, 85, 247, 0.2);
+      border-radius: 12px;
+      padding: 0.75rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .box-title { font-size: 0.775rem; font-weight: 700; color: var(--purple); }
+
+    .measure-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
+    .measure-field { display: flex; flex-direction: column; gap: 0.2rem; }
+    .measure-field label { font-size: 0.675rem; font-weight: 600; color: var(--text-muted); }
+    .measure-field input {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 0.4rem;
+      color: var(--text-main);
+      font-size: 0.85rem;
+      font-family: var(--font);
+      outline: none;
+      width: 100%;
+    }
+
+    /* Photo Upload Container */
+    .photo-upload-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .photo-preview {
+      width: 100%;
+      max-height: 180px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+    }
+
+    .btn-photo {
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      color: var(--purple);
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: var(--font);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .btn-remove-photo {
+      background: transparent;
+      border: none;
+      color: #ef4444;
+      font-size: 0.7rem;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .notes-box { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.5rem; }
+    .notes-box label { font-size: 0.725rem; font-weight: 600; color: var(--text-muted); }
+    .notes-box textarea {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.5rem;
+      color: var(--text-main);
+      font-size: 0.825rem;
+      font-family: var(--font);
+      resize: vertical;
+      min-height: 52px;
+      outline: none;
+    }
+
+    .workout-tag { color: var(--warning); font-weight: 600; }
+    .rest-tag { color: var(--text-dim); }
+    .cheat-tag { color: var(--purple); font-weight: 700; }
+
+    @media (min-width: 768px) {
+      body { padding: 2rem 1.5rem; }
+      h1 { font-size: 2.25rem; }
+      .subtitle { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-badge">Start Date: Wed Aug 26 • Editable Meals</div>
+    <h1>10-Week Transformation Plan</h1>
+    <p class="subtitle">Personalized tracker for a 1.93m height profile. Features Sunday cheat meals, body measurements, Sunday photos, and auto-calculated calories.</p>
+  </header>
+
+  <section class="dashboard-card">
+    <div class="progress-header">
+      <div class="progress-title">10-Week Overall Progress</div>
+      <div class="progress-number" id="overall-percentage">0%</div>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="overall-bar"></div>
+    </div>
+  </section>
+
+  <section class="controls-wrapper">
+    <div class="week-nav" id="week-buttons-container"></div>
+    <div class="action-bar">
+      <div class="week-info-tag" id="week-info-title">Week 1 <span>Phase 1: Rapid Loss Phase</span></div>
+      <button class="btn-reset" onclick="resetAllData()">Reset All</button>
+    </div>
+  </section>
+
+  <main class="days-grid" id="days-grid-container"></main>
+
+  <script>
+    // =========================================================================
+    // 🛠️ EDITABLE MEALS & CALORIES CONFIGURATION
+    // You can easily modify any meal name or calorie value below!
+    // =========================================================================
+    const MEAL_CONFIG = {
+      breakfast: { name: "2 Boiled Eggs", cal: 140 },
+      snack1:    { name: "Protein Shake OR 40g Jerky", cal: 150 },
+      snack2:    { name: "Cottage Cheese OR Edamame", cal: 150 },
+      
+      // Week 1 Lunches
+      lunchesWeek1: [
+        { name: "Tikka Masala", cal: 490 },
+        { name: "Chili sin Carne", cal: 445 },
+        { name: "Coco Curry Pasta", cal: 540 },
+        { name: "Umami Rice", cal: 425 },
+        { name: "Brilliant Bolognese", cal: 520 },
+        { name: "Naked Taco", cal: 495 },
+        { name: "Smoky Lentil Stew", cal: 525 }
+      ],
+
+      // Week 2 Lunches
+      lunchesWeek2: [
+        { name: "Peas & Love", cal: 545 },
+        { name: "Creamy Fricassée", cal: 450 },
+        { name: "Garden Gnocchi", cal: 470 },
+        { name: "Red Curry", cal: 470 },
+        { name: "Sesame Quinoa Salad", cal: 525 },
+        { name: "Bami Goreng", cal: 470 },
+        { name: "Potato Panorama", cal: 440 }
+      ],
+
+      // Week 1 Dinners
+      dinnersWeek1: [
+        { name: "½ Green Forest Bowl + Greek Yogurt", cal: 365 },
+        { name: "½ Nasi Goreng + Greek Yogurt", cal: 365 },
+        { name: "½ Golden Glow Bowl + Greek Yogurt", cal: 395 },
+        { name: "½ Red Pesto Gnocchi + Greek Yogurt", cal: 400 },
+        { name: "½ Tikka Masala + Greek Yogurt", cal: 345 },
+        { name: "½ Chili sin Carne + Greek Yogurt", cal: 320 },
+        { name: "SUNDAY CHEAT MEAL (Enjoy with Wife!)", cal: 850, isCheat: true }
+      ],
+
+      // Week 2 Dinners
+      dinnersWeek2: [
+        { name: "½ Nasi Goreng + Greek Yogurt", cal: 365 },
+        { name: "½ Golden Glow Bowl + Greek Yogurt", cal: 395 },
+        { name: "½ Red Pesto Gnocchi + Greek Yogurt", cal: 400 },
+        { name: "½ Tikka Masala + Greek Yogurt", cal: 345 },
+        { name: "½ Chili sin Carne + Greek Yogurt", cal: 320 },
+        { name: "½ Green Forest Bowl + Greek Yogurt", cal: 365 },
+        { name: "SUNDAY CHEAT MEAL (Enjoy with Wife!)", cal: 850, isCheat: true }
+      ]
+    };
+
+    const TOTAL_WEEKS = 10;
+    const DAYS_PER_WEEK = 7;
+    const TASKS = ['m1', 'm2', 'm3', 'm4', 'm5', 'steps', 'exercise'];
+    const dayNames = ["Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday"];
+
+    let currentWeek = 1;
+    let userState = {};
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadState();
+      renderWeekSelector();
+      renderCurrentWeek();
+      updateOverallProgress();
+    });
+
+    function loadState() {
+      const saved = localStorage.getItem("weightLossTracker_10weeks_v5");
+      if (saved) {
+        try { userState = JSON.parse(saved); } catch (e) { userState = {}; }
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem("weightLossTracker_10weeks_v5", JSON.stringify(userState));
+      updateOverallProgress();
+    }
+
+    function renderWeekSelector() {
+      const container = document.getElementById("week-buttons-container");
+      container.innerHTML = "";
+
+      for (let w = 1; w <= TOTAL_WEEKS; w++) {
+        const btn = document.createElement("button");
+        btn.className = `btn-week ${w === currentWeek ? "active" : ""}`;
+        btn.textContent = `Week ${w}`;
+        btn.onclick = () => {
+          currentWeek = w;
+          renderWeekSelector();
+          renderCurrentWeek();
+        };
+        container.appendChild(btn);
+      }
+    }
+
+    function getFormattedDate(weekIndex, dayIndex) {
+      const startDate = new Date(2026, 7, 26); // Aug 26, 2026
+      const daysToAdd = ((weekIndex - 1) * 7) + dayIndex;
+      const targetDate = new Date(startDate);
+      targetDate.setDate(startDate.getDate() + daysToAdd);
+      return targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    function renderCurrentWeek() {
+      const infoTag = document.getElementById("week-info-title");
+      let phaseText = "";
+      if (currentWeek <= 2) {
+        phaseText = "Phase 1: Rapid Loss Phase";
+      } else if (currentWeek <= 8) {
+        phaseText = "Phase 2: Core Fat Loss Phase (~1kg/wk)";
+      } else {
+        phaseText = "Phase 3: Final Push & Maintenance";
+      }
+
+      infoTag.innerHTML = `Week ${currentWeek} <span>${phaseText}</span>`;
+
+      const grid = document.getElementById("days-grid-container");
+      grid.innerHTML = "";
+
+      for (let d = 0; d < DAYS_PER_WEEK; d++) {
+        const dayKey = `w${currentWeek}_d${d}`;
+        const dayData = userState[dayKey] || {};
+
+        const isMenuWeek1 = (currentWeek % 2 !== 0);
+        const lunchObj = isMenuWeek1 ? MEAL_CONFIG.lunchesWeek1[d] : MEAL_CONFIG.lunchesWeek2[d];
+        const dinnerObj = isMenuWeek1 ? MEAL_CONFIG.dinnersWeek1[d] : MEAL_CONFIG.dinnersWeek2[d];
+
+        const isSunday = (d === 4);
+        const isWorkoutDay = (d === 0 || d === 2 || d === 3 || d === 5);
+        const exerciseText = isWorkoutDay 
+          ? `<span class="workout-tag">30-Min Workout</span>` 
+          : `<span class="rest-tag">Active Recovery Walk / Rest</span>`;
+
+        // DYNAMIC CALORIE CALCULATION
+        let dayConsumedCal = 0;
+        if (dayData.m1) dayConsumedCal += MEAL_CONFIG.breakfast.cal;
+        if (dayData.m2) dayConsumedCal += MEAL_CONFIG.snack1.cal;
+        if (dayData.m3) dayConsumedCal += lunchObj.cal;
+        if (dayData.m4) dayConsumedCal += MEAL_CONFIG.snack2.cal;
+        if (dayData.m5) dayConsumedCal += dinnerObj.cal;
+
+        const totalPlannedCal = MEAL_CONFIG.breakfast.cal + MEAL_CONFIG.snack1.cal + lunchObj.cal + MEAL_CONFIG.snack2.cal + dinnerObj.cal;
+        const completedCount = TASKS.filter(k => dayData[k]).length;
+        const isFullyDone = completedCount === TASKS.length;
+        const dateStr = getFormattedDate(currentWeek, d);
+
+        const card = document.createElement("div");
+        card.className = `day-card ${isFullyDone ? "completed-day" : ""}`;
+
+        let sundayExtrasHTML = "";
+        if (isSunday) {
+          const photoHTML = dayData.photo 
+            ? `<img src="${dayData.photo}" class="photo-preview" alt="Progress Photo">
+               <button class="btn-remove-photo" onclick="removePhoto('${dayKey}')">Remove Photo</button>`
+            : `<button class="btn-photo" onclick="document.getElementById('${dayKey}_file').click()">
+                 📷 Upload Progress Photo
+               </button>
+               <input type="file" id="${dayKey}_file" accept="image/*" style="display:none" onchange="handlePhotoUpload('${dayKey}', this)">`;
+
+          sundayExtrasHTML = `
+            <div class="section-divider"></div>
+            <div class="sunday-box">
+              <div class="box-title">Sunday Body Measurements (cm)</div>
+              <div class="measure-grid">
+                <div class="measure-field">
+                  <label for="${dayKey}_waist">Belly/Waist</label>
+                  <input type="number" step="0.1" id="${dayKey}_waist" placeholder="cm" value="${dayData.waist || ''}" onchange="saveInputField('${dayKey}', 'waist', this.value)">
+                </div>
+                <div class="measure-field">
+                  <label for="${dayKey}_chest">Chest</label>
+                  <input type="number" step="0.1" id="${dayKey}_chest" placeholder="cm" value="${dayData.chest || ''}" onchange="saveInputField('${dayKey}', 'chest', this.value)">
+                </div>
+                <div class="measure-field">
+                  <label for="${dayKey}_quads">Quads</label>
+                  <input type="number" step="0.1" id="${dayKey}_quads" placeholder="cm" value="${dayData.quads || ''}" onchange="saveInputField('${dayKey}', 'quads', this.value)">
+                </div>
+              </div>
+
+              <div class="section-divider" style="margin: 0.2rem 0;"></div>
+              
+              <div class="photo-upload-zone">
+                ${photoHTML}
+              </div>
+            </div>
+          `;
+        }
+
+        card.innerHTML = `
+          <div>
+            <div class="day-header">
+              <div>
+                <div class="day-title">${dayNames[d]}</div>
+                <div class="day-date">${dateStr}</div>
+              </div>
+              <div class="header-badges">
+                <span class="day-badge">${completedCount}/${TASKS.length} Done</span>
+                <span class="calorie-pill ${dinnerObj.isCheat ? 'cheat' : ''}">${dayConsumedCal} / ${totalPlannedCal} kcal</span>
+              </div>
+            </div>
+            
+            <div class="checklist">
+              ${renderCheckItem(dayKey, 'm1', dayData.m1, 'Breakfast', MEAL_CONFIG.breakfast.name, MEAL_CONFIG.breakfast.cal)}
+              ${renderCheckItem(dayKey, 'm2', dayData.m2, 'Morning Snack', MEAL_CONFIG.snack1.name, MEAL_CONFIG.snack1.cal)}
+              ${renderCheckItem(dayKey, 'm3', dayData.m3, 'Lunch (Full Meal)', lunchObj.name, lunchObj.cal)}
+              ${renderCheckItem(dayKey, 'm4', dayData.m4, 'Afternoon Snack', MEAL_CONFIG.snack2.name, MEAL_CONFIG.snack2.cal)}
+              ${renderCheckItem(dayKey, 'm5', dayData.m5, dinnerObj.isCheat ? 'Dinner (Cheat Meal 🎉)' : 'Dinner (½ Meal + Yogurt)', dinnerObj.name, dinnerObj.cal, dinnerObj.isCheat)}
+              ${renderCheckItem(dayKey, 'steps', dayData.steps, '10,000 Steps', 'Daily movement goal', 0)}
+              ${renderCheckItem(dayKey, 'exercise', dayData.exercise, 'Exercise Routine', exerciseText, 0)}
+            </div>
+
+            ${sundayExtrasHTML}
+
+            <div class="notes-box">
+              <label for="${dayKey}_notes">Daily Notes & Log</label>
+              <textarea id="${dayKey}_notes" placeholder="Energy, cravings, weight notes..." onchange="saveInputField('${dayKey}', 'notes', this.value)">${dayData.notes || ''}</textarea>
+            </div>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      }
+    }
+
+    function renderCheckItem(dayKey, taskId, isChecked, title, desc, cal, isCheat = false) {
+      const calLabel = cal > 0 ? `<span class="item-cal ${isCheat ? 'cheat-tag' : ''}">${isCheat ? '~' + cal : '+' + cal} kcal</span>` : '';
+      return `
+        <label class="check-item" onclick="event.stopPropagation();">
+          <input type="checkbox" id="${dayKey}_${taskId}" ${isChecked ? "checked" : ""} onchange="toggleTask('${dayKey}', '${taskId}')">
+          <span class="checkbox-custom"></span>
+          <span class="item-content">
+            <span class="item-title">
+              <span>${title}</span>
+              ${calLabel}
+            </span>
+            <span class="item-desc">${desc}</span>
+          </span>
+        </label>
+      `;
+    }
+
+    function toggleTask(dayKey, taskId) {
+      if (!userState[dayKey]) userState[dayKey] = {};
+      userState[dayKey][taskId] = !userState[dayKey][taskId];
+      saveState();
+      renderCurrentWeek();
+    }
+
+    function saveInputField(dayKey, field, value) {
+      if (!userState[dayKey]) userState[dayKey] = {};
+      userState[dayKey][field] = value;
+      saveState();
+    }
+
+    // PHOTO UPLOAD & AUTOMATIC COMPRESSION
+    function handlePhotoUpload(dayKey, input) {
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = function() {
+          // Compress image to max 500px to keep localStorage tiny
+          const canvas = document.createElement("canvas");
+          const maxDim = 500;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height && width > maxDim) {
+            height *= maxDim / width;
+            width = maxDim;
+          } else if (height > maxDim) {
+            width *= maxDim / height;
+            height = maxDim;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+          saveInputField(dayKey, 'photo', compressedBase64);
+          renderCurrentWeek();
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removePhoto(dayKey) {
+      if (confirm("Delete this progress photo?")) {
+        delete userState[dayKey].photo;
+        saveState();
+        renderCurrentWeek();
+      }
+    }
+
+    function updateOverallProgress() {
+      const totalTasks = TOTAL_WEEKS * DAYS_PER_WEEK * TASKS.length;
+      let completedTasks = 0;
+
+      for (let w = 1; w <= TOTAL_WEEKS; w++) {
+        for (let d = 0; d < DAYS_PER_WEEK; d++) {
+          const dayKey = `w${w}_d${d}`;
+          const dayData = userState[dayKey] || {};
+          TASKS.forEach(k => {
+            if (dayData[k]) completedTasks++;
+          });
+        }
+      }
+
+      const percent = Math.round((completedTasks / totalTasks) * 100);
+      document.getElementById("overall-percentage").textContent = `${percent}%`;
+      document.getElementById("overall-bar").style.width = `${percent}%`;
+    }
+
+    function resetAllData() {
+      if (confirm("Reset all tracked progress, photos, notes, and body measurements?")) {
+        userState = {};
+        saveState();
+        renderCurrentWeek();
+      }
+    }
+  </script>
+</body>
+</html>
