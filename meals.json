@@ -1,0 +1,41 @@
+{
+  "defaultBreakfast": { "name": "2 Boiled Eggs", "cal": 140 },
+  "defaultSnack1": { "name": "Protein Shake OR 40g Jerky", "cal": 150 },
+  "defaultSnack2": { "name": "Cottage Cheese OR Edamame", "cal": 150 },
+  "lunchesWeek1": [
+    { "name": "Tikka Masala", "cal": 490 },
+    { "name": "Chili sin Carne", "cal": 445 },
+    { "name": "Coco Curry Pasta", "cal": 540 },
+    { "name": "Umami Rice", "cal": 425 },
+    { "name": "Brilliant Bolognese", "cal": 520 },
+    { "name": "Naked Taco", "cal": 495 },
+    { "name": "Smoky Lentil Stew", "cal": 525 }
+  ],
+  "lunchesWeek2": [
+    { "name": "Peas & Love", "cal": 545 },
+    { "name": "Creamy Fricassée", "cal": 450 },
+    { "name": "Garden Gnocchi", "cal": 470 },
+    { "name": "Red Curry", "cal": 470 },
+    { "name": "Sesame Quinoa Salad", "cal": 525 },
+    { "name": "Bami Goreng", "cal": 470 },
+    { "name": "Potato Panorama", "cal": 440 }
+  ],
+  "dinnersWeek1": [
+    { "name": "½ Green Forest Bowl + Greek Yogurt", "cal": 365 },
+    { "name": "½ Nasi Goreng + Greek Yogurt", "cal": 365 },
+    { "name": "½ Golden Glow Bowl + Greek Yogurt", "cal": 395 },
+    { "name": "½ Red Pesto Gnocchi + Greek Yogurt", "cal": 400 },
+    { "name": "½ Tikka Masala + Greek Yogurt", "cal": 345 },
+    { "name": "½ Chili sin Carne + Greek Yogurt", "cal": 320 },
+    { "name": "SUNDAY CHEAT MEAL (Enjoy with Wife!)", "cal": 850, "isCheat": true }
+  ],
+  "dinnersWeek2": [
+    { "name": "½ Nasi Goreng + Greek Yogurt", "cal": 365 },
+    { "name": "½ Golden Glow Bowl + Greek Yogurt", "cal": 395 },
+    { "name": "½ Red Pesto Gnocchi + Greek Yogurt", "cal": 400 },
+    { "name": "½ Tikka Masala + Greek Yogurt", "cal": 345 },
+    { "name": "½ Chili sin Carne + Greek Yogurt", "cal": 320 },
+    { "name": "½ Green Forest Bowl + Greek Yogurt", "cal": 365 },
+    { "name": "SUNDAY CHEAT MEAL (Enjoy with Wife!)", "cal": 850, "isCheat": true }
+  ]
+}
