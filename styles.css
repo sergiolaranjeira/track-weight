@@ -225,7 +225,6 @@ h1 {
   border: 1px solid var(--card-border);
 }
 
-/* Day Rating Pill (NPS 0-10) */
 .score-pill {
   font-size: 0.75rem;
   font-weight: 800;
