@@ -53,16 +53,19 @@ Settings are saved to `localStorage` under the key `weightLossTrackerConfig`. Cl
 ## 📂 Project Structure
 
 ```text
-├── index.html     # Main tracker — redirects to config.html on first visit
-├── stats.html     # Stats & charts page (Chart.js)
-├── config.html    # Settings / first-run setup page
-├── styles.css     # Dark-mode UI styling shared by all pages
-├── shared.js      # Shared data loading, config system, score/calorie calculations
-├── script.js      # Tracker page: rendering, state management, and user interactions
-├── stats.js       # Stats page: aggregates logged data and renders charts
-├── config.js      # Settings page: reads and writes APP_CONFIG to localStorage
-├── meals.json     # Weekly lunch/dinner rotation and fallback default meals
-└── README.md      # Project documentation
+├── index.html       # Main tracker — redirects to config.html on first visit
+├── stats.html       # Stats & charts page (Chart.js)
+├── config.html      # Settings / first-run setup page
+├── favicon.svg
+├── meals.json       # Weekly lunch/dinner rotation and fallback default meals
+├── css/
+│   └── styles.css   # Dark-mode UI styling shared by all pages
+├── js/
+│   ├── shared.js    # Shared data loading, config system, score/calorie calculations
+│   ├── script.js    # Tracker page: rendering, state management, and user interactions
+│   ├── stats.js     # Stats page: aggregates logged data and renders charts
+│   └── config.js    # Settings page: reads and writes APP_CONFIG to localStorage
+└── README.md        # Project documentation
 ```
 
 ---

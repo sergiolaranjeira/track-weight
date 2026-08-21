@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Dark rounded background -->
+  <rect width="32" height="32" rx="7" fill="#0b0f17"/>
+  <!-- Trending-down line (weight loss chart) -->
+  <polyline points="4,10 11,14 19,11 28,21"
+    stroke="#38bdf8" stroke-width="2.8"
+    fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Goal dot at the end in green -->
+  <circle cx="28" cy="21" r="3" fill="#10b981"/>
+</svg>
