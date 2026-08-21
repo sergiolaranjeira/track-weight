@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="files/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -27,6 +27,10 @@
     <div class="cfg-section">
       <div class="cfg-section-title">Your Profile</div>
       <div class="cfg-grid">
+        <div class="cfg-field cfg-field-grow">
+          <label for="cfg-name">Your Name</label>
+          <input type="text" id="cfg-name" placeholder="e.g. Sérgio">
+        </div>
         <div class="cfg-field">
           <label for="cfg-height">Height (m)</label>
           <input type="number" id="cfg-height" step="0.01" min="1" max="2.5" placeholder="1.93">
@@ -38,6 +42,25 @@
         <div class="cfg-field">
           <label for="cfg-goal-weight">Goal Weight (kg)</label>
           <input type="number" id="cfg-goal-weight" step="0.1" min="30" max="300" placeholder="85">
+        </div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <div class="cfg-meal-label">Starting Measurements (cm, optional)</div>
+      <p class="cfg-section-desc">Used as the "Day 0" point on the Body Measurements chart in Stats.</p>
+      <div class="cfg-grid">
+        <div class="cfg-field">
+          <label for="cfg-initial-waist">Waist</label>
+          <input type="number" id="cfg-initial-waist" step="0.1" min="0" placeholder="cm">
+        </div>
+        <div class="cfg-field">
+          <label for="cfg-initial-chest">Chest</label>
+          <input type="number" id="cfg-initial-chest" step="0.1" min="0" placeholder="cm">
+        </div>
+        <div class="cfg-field">
+          <label for="cfg-initial-quads">Quads</label>
+          <input type="number" id="cfg-initial-quads" step="0.1" min="0" placeholder="cm">
         </div>
       </div>
     </div>

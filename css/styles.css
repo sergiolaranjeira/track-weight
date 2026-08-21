@@ -84,6 +84,8 @@ h1 {
 
 .subtitle { color: var(--text-muted); font-size: 0.85rem; }
 
+.welcome-line { color: var(--accent); font-size: 0.95rem; font-weight: 700; }
+
 .dashboard-card {
   background: var(--card-bg);
   backdrop-filter: blur(12px);
@@ -834,6 +836,51 @@ h1 {
   border-radius: 8px;
   margin-bottom: 0.75rem;
   text-align: center;
+}
+
+/* --- Profile switcher --- */
+
+.profile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.profile-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  background: rgba(15, 23, 42, 0.5);
+  text-decoration: none;
+  color: var(--text-main);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: border-color 0.15s;
+}
+
+.profile-item:hover { border-color: var(--card-border-hover); }
+
+.profile-item-active {
+  border-color: rgba(56, 189, 248, 0.4);
+  background: var(--accent-glow);
+}
+
+.profile-item-name { flex: 1; }
+
+.profile-item-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
 }
 
 @media (min-width: 768px) {

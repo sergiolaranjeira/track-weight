@@ -1,16 +1,67 @@
 // Data loading and calculation logic shared between the tracker (script.js)
 // and the stats page (stats.js), so both stay in sync from one source of truth.
 
-const STORAGE_KEY = "weightLossTracker_10weeks_v8";
-const CONFIG_KEY = "weightLossTrackerConfig";
+// Profile — derived from ?profile= URL param. 'default' keeps original key names
+// so existing data is never broken. Named profiles get their own namespaced keys.
+const PROFILE_NAME = new URLSearchParams(window.location.search).get('profile') || 'default';
+const STORAGE_KEY = PROFILE_NAME === 'default'
+  ? "weightLossTracker_10weeks_v8"
+  : `weightLossTracker_${PROFILE_NAME}_v8`;
+const CONFIG_KEY = PROFILE_NAME === 'default'
+  ? "weightLossTrackerConfig"
+  : `weightLossTrackerConfig_${PROFILE_NAME}`;
+const PHOTO_DB_NAME_KEY = PROFILE_NAME === 'default'
+  ? "trackWeightPhotos"
+  : `trackWeightPhotos_${PROFILE_NAME}`;
 let TOTAL_WEEKS = 10;
+
+// Builds a same-site URL with the current profile param preserved.
+function profileUrl(page) {
+  const url = new URL(page, location.href);
+  if (PROFILE_NAME !== 'default') url.searchParams.set('profile', PROFILE_NAME);
+  return url.toString();
+}
+
+// Rewrites all internal <a href> links on the page to include ?profile= so
+// navigation never drops the active profile.
+function rewriteInternalLinks() {
+  if (PROFILE_NAME === 'default') return;
+  document.querySelectorAll('a[href]').forEach(a => {
+    try {
+      const url = new URL(a.href, location.href);
+      if (url.hostname === location.hostname && !url.searchParams.has('profile')) {
+        url.searchParams.set('profile', PROFILE_NAME);
+        a.href = url.toString();
+      }
+    } catch (_) {}
+  });
+}
+
+// Returns all profile names found in localStorage (including 'default').
+function getStoredProfiles() {
+  const profiles = new Set();
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key === 'weightLossTrackerConfig') {
+      profiles.add('default');
+    } else {
+      const m = key.match(/^weightLossTrackerConfig_(.+)$/);
+      if (m) profiles.add(m[1]);
+    }
+  }
+  return [...profiles];
+}
 const TASKS = ['m1', 'm2', 'm3', 'm4', 'm5', 'steps', 'exercise'];
 const mondayDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 const DEFAULT_CONFIG = {
   planStartDate: "2026-08-26",
   totalWeeks: 10,
-  profile: { heightM: 1.93, startWeightKg: 94, goalWeightKg: 85 },
+  profile: {
+    name: "",
+    heightM: 1.93, startWeightKg: 94, goalWeightKg: 85,
+    initialWaist: null, initialChest: null, initialQuads: null
+  },
   defaultBreakfast: { name: "2 Boiled Eggs", cal: 140 },
   defaultSnack1: { name: "Protein Shake OR 40g Jerky", cal: 150 },
   defaultSnack2: { name: "Cottage Cheese OR Edamame", cal: 150 },
@@ -64,7 +115,11 @@ function getWeek1StartDayIndex() {
 }
 
 let MEAL_CONFIG = {
-  profile: { heightM: 1.93, startWeightKg: 94, goalWeightKg: 85 },
+  profile: {
+    name: "",
+    heightM: 1.93, startWeightKg: 94, goalWeightKg: 85,
+    initialWaist: null, initialChest: null, initialQuads: null
+  },
   defaultBreakfast: { name: "2 Boiled Eggs", cal: 140 },
   defaultSnack1: { name: "Protein Shake OR 40g Jerky", cal: 150 },
   defaultSnack2: { name: "Cottage Cheese OR Edamame", cal: 150 },
@@ -98,7 +153,7 @@ let userState = {};
 
 async function fetchMealsJSON() {
   try {
-    const res = await fetch('meals.json');
+    const res = await fetch('files/meals.json');
     if (res.ok) {
       MEAL_CONFIG = await res.json();
     }
@@ -266,12 +321,11 @@ function computeOverallProgress() {
 
 // Photos are stored as Blobs in IndexedDB instead of base64 in localStorage,
 // since localStorage quotas (~5-10MB) fill up fast with 10 weeks of images.
-const PHOTO_DB_NAME = "trackWeightPhotos";
 const PHOTO_STORE = "photos";
 
 function openPhotoDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(PHOTO_DB_NAME, 1);
+    const req = indexedDB.open(PHOTO_DB_NAME_KEY, 1);
     req.onupgradeneeded = () => req.result.createObjectStore(PHOTO_STORE);
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);

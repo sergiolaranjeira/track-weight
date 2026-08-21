@@ -14,6 +14,7 @@ Chart.defaults.borderColor = COLORS.grid;
 Chart.defaults.font.family = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif";
 
 document.addEventListener("DOMContentLoaded", async () => {
+  rewriteInternalLinks();
   await fetchMealsJSON();
   loadConfig();
   loadState();
@@ -114,7 +115,9 @@ function renderWeightChart(loggedDays) {
     return;
   }
 
-  const labels = entries.map(d => d.dateStr);
+  const labels = ['Start', ...entries.map(d => d.dateStr)];
+  const weightData = [profile.startWeightKg, ...entries.map(d => d.weightNum)];
+
   new Chart(document.getElementById('weightChart'), {
     type: 'line',
     data: {
@@ -122,7 +125,7 @@ function renderWeightChart(loggedDays) {
       datasets: [
         {
           label: 'Weight (kg)',
-          data: entries.map(d => d.weightNum),
+          data: weightData,
           borderColor: COLORS.accent,
           backgroundColor: 'rgba(56, 189, 248, 0.12)',
           fill: true,
@@ -149,33 +152,38 @@ function renderWeightChart(loggedDays) {
 }
 
 function renderMeasurementsChart(loggedDays) {
+  const { profile } = MEAL_CONFIG;
   const fields = [
-    { key: 'waist', label: 'Waist', color: COLORS.accent },
-    { key: 'chest', label: 'Chest', color: COLORS.success },
-    { key: 'quads', label: 'Quads', color: COLORS.purple }
+    { key: 'waist', label: 'Waist', color: COLORS.accent, initial: profile.initialWaist },
+    { key: 'chest', label: 'Chest', color: COLORS.success, initial: profile.initialChest },
+    { key: 'quads', label: 'Quads', color: COLORS.purple, initial: profile.initialQuads }
   ];
 
   const entries = loggedDays.filter(d => d.dayData.waist || d.dayData.chest || d.dayData.quads);
+  const hasBaseline = fields.some(f => f.initial !== null && f.initial !== undefined);
 
-  if (!entries.length) {
+  if (!entries.length && !hasBaseline) {
     emptyState('measurementsChartWrap', 'No body measurements logged yet.');
     return;
   }
 
-  const labels = entries.map(d => d.dateStr);
+  const labels = hasBaseline ? ['Start', ...entries.map(d => d.dateStr)] : entries.map(d => d.dateStr);
   new Chart(document.getElementById('measurementsChart'), {
     type: 'line',
     data: {
       labels,
-      datasets: fields.map(f => ({
-        label: f.label,
-        data: entries.map(d => d.dayData[f.key] !== undefined && d.dayData[f.key] !== '' ? parseFloat(d.dayData[f.key]) : null),
-        borderColor: f.color,
-        backgroundColor: f.color,
-        spanGaps: true,
-        tension: 0.3,
-        pointRadius: 3
-      }))
+      datasets: fields.map(f => {
+        const loggedValues = entries.map(d => d.dayData[f.key] !== undefined && d.dayData[f.key] !== '' ? parseFloat(d.dayData[f.key]) : null);
+        return {
+          label: f.label,
+          data: hasBaseline ? [f.initial ?? null, ...loggedValues] : loggedValues,
+          borderColor: f.color,
+          backgroundColor: f.color,
+          spanGaps: true,
+          tension: 0.3,
+          pointRadius: 3
+        };
+      })
     },
     options: {
       responsive: true,

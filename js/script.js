@@ -2,6 +2,7 @@ let currentWeek = 1;
 let activeObjectUrls = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
+  rewriteInternalLinks();
   await fetchMealsJSON();
   loadConfig();
   renderProfileSubtitle();
@@ -131,14 +132,24 @@ function updateMealOverride(dayKey, taskId, field, value) {
 }
 
 function renderProfileSubtitle() {
-  const { heightM, startWeightKg, goalWeightKg } = MEAL_CONFIG.profile;
+  const { name, heightM, startWeightKg, goalWeightKg } = MEAL_CONFIG.profile;
   document.getElementById("app-subtitle").textContent =
     `Personalized tracker for a ${heightM}m height profile, going from ${startWeightKg}kg to ${goalWeightKg}kg. Features Mon-Sun weekly views, exercise logs, Sunday progress photos, and weighted 0-10 daily quality scores.`;
   const badge = document.querySelector(".brand-badge");
   if (badge) {
     const startDate = getStartDate();
     const dateStr = startDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-    badge.textContent = `Start Date: ${dateStr} • Mon-Sun Calendar`;
+    const profileLabel = PROFILE_NAME !== 'default' ? ` • ${PROFILE_NAME}` : '';
+    badge.textContent = `Start Date: ${dateStr} • Mon-Sun Calendar${profileLabel}`;
+  }
+  const welcomeLine = document.getElementById("welcome-line");
+  if (welcomeLine) {
+    if (name) {
+      welcomeLine.textContent = `Welcome, ${name} 👋`;
+      welcomeLine.hidden = false;
+    } else {
+      welcomeLine.hidden = true;
+    }
   }
 }
 
@@ -586,4 +597,45 @@ async function importDataFromFile(file) {
     console.error("Import failed:", err);
     alert("Couldn't import this file — it doesn't look like a valid track-weight backup.");
   }
+}
+
+// --- Profile switcher ---
+
+function openProfileSwitcher() {
+  const existing = getStoredProfiles();
+
+  const profileItems = existing.map(p => {
+    const label = p === 'default' ? 'Default' : p;
+    const isCurrent = p === PROFILE_NAME;
+    const url = p === 'default' ? 'index.html' : `index.html?profile=${encodeURIComponent(p)}`;
+    return `
+      <a class="profile-item ${isCurrent ? 'profile-item-active' : ''}" href="${url}">
+        <span class="profile-item-name">${label}</span>
+        ${isCurrent ? '<span class="profile-item-badge">Active</span>' : ''}
+      </a>`;
+  }).join('');
+
+  showModal(`
+    <div class="modal-title">Switch Profile</div>
+    <div class="modal-message">Each profile has its own plan, data, and settings stored separately in this browser.</div>
+    <div class="profile-list">${profileItems}</div>
+    <div class="modal-field" style="margin-top:1rem;">
+      <label for="new-profile-input" style="font-size:0.7rem;font-weight:600;color:var(--text-muted);">New profile name</label>
+      <div style="display:flex;gap:0.5rem;margin-top:0.3rem;">
+        <input type="text" id="new-profile-input" placeholder="e.g. Antonia" style="flex:1;background:rgba(15,23,42,0.8);border:1px solid var(--card-border);border-radius:8px;padding:0.5rem 0.6rem;color:var(--text-main);font-size:0.85rem;font-family:var(--font);outline:none;">
+        <button class="btn-modal-confirm" onclick="createProfile()" style="flex-shrink:0;">Create</button>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:0.75rem;">
+      <button class="btn-modal-cancel" onclick="closeModal()">Close</button>
+    </div>
+  `);
+}
+
+function createProfile() {
+  const input = document.getElementById('new-profile-input');
+  const name = input.value.trim();
+  if (!name) { input.focus(); return; }
+  const safeName = name.replace(/[^a-zA-Z0-9_-]/g, '_');
+  window.location.href = `index.html?profile=${encodeURIComponent(safeName)}`;
 }

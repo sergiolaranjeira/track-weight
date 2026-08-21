@@ -10,6 +10,7 @@ A lightweight, mobile-responsive web application for tracking a structured weigh
 ## 🌟 Key Features
 
 * **First-run Setup:** On first visit, the app redirects automatically to the Settings page so you can configure your plan before tracking begins.
+* **Personalized Greeting:** Set your name in Settings and the tracker greets you with "Welcome, {name}" on the home page.
 * **Monday–Sunday Calendar View:** Structured weekly views with a partial first week that adjusts automatically to your configured start date.
 * **Automated Daily Score (0–10 Scale):** Evaluates daily performance using a weighted rating engine:
   * **40% Calories:** Rewards eating at or near that day's full planned meal total (or cheat day allowance).
@@ -39,10 +40,12 @@ On first launch the app opens `config.html` automatically. You can return to it 
 
 | Section | Fields |
 |---|---|
-| **Profile** | Height (m), start weight (kg), goal weight (kg) |
+| **Profile** | Your name, height (m), start weight (kg), goal weight (kg), and optional starting waist/chest/quads measurements (cm) |
 | **Plan** | Plan start date, total number of weeks |
 | **Default Meals** | Breakfast, morning snack, and afternoon snack — name and calories each |
 | **Scoring** | Cheat-day calorie thresholds (perfect / partial), green and yellow score display cutoffs |
+
+Your name (if set) is shown as a "Welcome, {name}" greeting on the tracker's home page. Starting measurements (if set) appear as the "Day 0" point on the Body Measurements chart in Stats, alongside your start weight on the Weight vs. Goal chart.
 
 Settings are saved to `localStorage` under the key `weightLossTrackerConfig`. Clicking **Reset to Defaults** restores all values without triggering the first-run redirect.
 
@@ -56,8 +59,6 @@ Settings are saved to `localStorage` under the key `weightLossTrackerConfig`. Cl
 ├── index.html       # Main tracker — redirects to config.html on first visit
 ├── stats.html       # Stats & charts page (Chart.js)
 ├── config.html      # Settings / first-run setup page
-├── favicon.svg
-├── meals.json       # Weekly lunch/dinner rotation and fallback default meals
 ├── css/
 │   └── styles.css   # Dark-mode UI styling shared by all pages
 ├── js/
@@ -65,6 +66,9 @@ Settings are saved to `localStorage` under the key `weightLossTrackerConfig`. Cl
 │   ├── script.js    # Tracker page: rendering, state management, and user interactions
 │   ├── stats.js     # Stats page: aggregates logged data and renders charts
 │   └── config.js    # Settings page: reads and writes APP_CONFIG to localStorage
+├── files/
+│   ├── meals.json   # Weekly lunch/dinner rotation and fallback default meals
+│   └── favicon.svg
 └── README.md        # Project documentation
 ```
 

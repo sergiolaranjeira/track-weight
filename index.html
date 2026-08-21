@@ -9,11 +9,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="files/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/styles.css">
   <script>
-    if (!localStorage.getItem('weightLossTrackerConfig')) {
-      location.replace('config.html');
+    const _profile = new URLSearchParams(location.search).get('profile') || 'default';
+    const _cfgKey = _profile === 'default' ? 'weightLossTrackerConfig' : `weightLossTrackerConfig_${_profile}`;
+    if (!localStorage.getItem(_cfgKey)) {
+      const _dest = new URL('config.html', location.href);
+      if (_profile !== 'default') _dest.searchParams.set('profile', _profile);
+      location.replace(_dest.toString());
     }
   </script>
 </head>
@@ -21,6 +25,7 @@
 
   <header>
     <div class="brand-badge">Loading…</div>
+    <p class="welcome-line" id="welcome-line" hidden></p>
     <h1>10-Week Transformation Plan</h1>
     <p class="subtitle" id="app-subtitle">Personalized tracker. Features Mon-Sun weekly views, exercise logs, Sunday progress photos, and weighted 0-10 daily quality scores.</p>
   </header>
@@ -40,6 +45,7 @@
     <h2 class="visually-hidden">Quick Actions</h2>
     <a class="qa-btn" href="stats.html">📊<span>Charts</span></a>
     <a class="qa-btn" href="config.html">⚙️<span>Settings</span></a>
+    <button class="qa-btn" onclick="openProfileSwitcher()">👤<span>Switch Profile</span></button>
     <button class="qa-btn" onclick="openLogEntryModal()">📏<span>Log Weight & Measures</span></button>
     <button class="qa-btn" onclick="exportData()">⬇️<span>Export Backup</span></button>
     <button class="qa-btn" onclick="triggerImport()">⬆️<span>Import Backup</span></button>

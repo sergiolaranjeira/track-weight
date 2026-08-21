@@ -1,6 +1,7 @@
 const isFirstSetup = !localStorage.getItem(CONFIG_KEY);
 
 document.addEventListener("DOMContentLoaded", async () => {
+  rewriteInternalLinks();
   await fetchMealsJSON();
   loadConfig();
   fillForm(APP_CONFIG);
@@ -15,9 +16,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function fillForm(cfg) {
+  document.getElementById("cfg-name").value = cfg.profile.name || "";
   document.getElementById("cfg-height").value = cfg.profile.heightM;
   document.getElementById("cfg-start-weight").value = cfg.profile.startWeightKg;
   document.getElementById("cfg-goal-weight").value = cfg.profile.goalWeightKg;
+  document.getElementById("cfg-initial-waist").value = cfg.profile.initialWaist ?? "";
+  document.getElementById("cfg-initial-chest").value = cfg.profile.initialChest ?? "";
+  document.getElementById("cfg-initial-quads").value = cfg.profile.initialQuads ?? "";
 
   document.getElementById("cfg-start-date").value = cfg.planStartDate;
   document.getElementById("cfg-total-weeks").value = cfg.totalWeeks;
@@ -40,9 +45,13 @@ function readForm() {
     planStartDate: document.getElementById("cfg-start-date").value || DEFAULT_CONFIG.planStartDate,
     totalWeeks: Math.max(1, parseInt(document.getElementById("cfg-total-weeks").value, 10) || DEFAULT_CONFIG.totalWeeks),
     profile: {
+      name: document.getElementById("cfg-name").value.trim(),
       heightM: parseFloat(document.getElementById("cfg-height").value) || DEFAULT_CONFIG.profile.heightM,
       startWeightKg: parseFloat(document.getElementById("cfg-start-weight").value) || DEFAULT_CONFIG.profile.startWeightKg,
-      goalWeightKg: parseFloat(document.getElementById("cfg-goal-weight").value) || DEFAULT_CONFIG.profile.goalWeightKg
+      goalWeightKg: parseFloat(document.getElementById("cfg-goal-weight").value) || DEFAULT_CONFIG.profile.goalWeightKg,
+      initialWaist: parseFloat(document.getElementById("cfg-initial-waist").value) || null,
+      initialChest: parseFloat(document.getElementById("cfg-initial-chest").value) || null,
+      initialQuads: parseFloat(document.getElementById("cfg-initial-quads").value) || null
     },
     defaultBreakfast: {
       name: document.getElementById("cfg-b-name").value.trim() || DEFAULT_CONFIG.defaultBreakfast.name,
@@ -68,7 +77,7 @@ function readForm() {
 function saveSettings() {
   const cfg = readForm();
   saveConfig(cfg);
-  window.location.href = 'index.html';
+  window.location.href = profileUrl('index.html');
 }
 
 function resetToDefaults() {
