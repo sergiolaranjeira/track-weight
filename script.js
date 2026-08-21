@@ -41,7 +41,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   await fetchMealsJSON();
   renderProfileSubtitle();
   loadState();
-  await migrateLegacyPhotos();
+  try {
+    await migrateLegacyPhotos();
+  } catch (err) {
+    console.error("Photo migration failed, continuing without it:", err);
+  }
   renderWeekSelector();
   renderCurrentWeek();
   updateOverallProgress();
@@ -190,18 +194,21 @@ function getFormattedDate(weekIndex, dayIndex) {
 }
 
 // AUTOMATED DAILY QUALITY SCORE (0-10 SCALE)
-function calculateDayScore(dayData, dayConsumedCal, isCheat) {
+function calculateDayScore(dayData, dayConsumedCal, totalPlannedCal, isCheat) {
   let score = 0;
 
   // 1. Calorie Target (4.0 Points Max / 40%)
+  // Scored relative to that day's own planned total (rather than a fixed kcal band) so that
+  // checking every meal always earns full marks, even after the meal plan is edited in meals.json.
   if (dayConsumedCal > 0) {
     if (isCheat) {
       if (dayConsumedCal <= 2100) score += 4.0;
       else if (dayConsumedCal <= 2400) score += 2.0;
     } else {
-      if (dayConsumedCal >= 1400 && dayConsumedCal <= 1650) {
+      const planRatio = dayConsumedCal / totalPlannedCal;
+      if (planRatio >= 0.95) {
         score += 4.0;
-      } else if ((dayConsumedCal >= 1200 && dayConsumedCal < 1400) || (dayConsumedCal > 1650 && dayConsumedCal <= 1850)) {
+      } else if (planRatio >= 0.75) {
         score += 2.0;
       }
     }
@@ -271,7 +278,7 @@ function renderCurrentWeek() {
     const isFullyDone = completedCount === TASKS.length;
     const dateStr = getFormattedDate(currentWeek, d);
 
-    const dayScore = calculateDayScore(dayData, dayConsumedCal, dinnerObj.isCheat);
+    const dayScore = calculateDayScore(dayData, dayConsumedCal, totalPlannedCal, dinnerObj.isCheat);
     let scoreClass = "score-low";
     if (dayScore >= 8.5) scoreClass = "score-high";
     else if (dayScore >= 6.0) scoreClass = "score-mid";
@@ -418,8 +425,13 @@ function handlePhotoUpload(dayKey, input) {
       ctx.drawImage(img, 0, 0, width, height);
 
       canvas.toBlob(async (blob) => {
-        await savePhoto(dayKey, blob);
-        saveInputField(dayKey, 'hasPhoto', true);
+        try {
+          await savePhoto(dayKey, blob);
+          saveInputField(dayKey, 'hasPhoto', true);
+        } catch (err) {
+          console.error("Failed to save photo:", err);
+          alert("Couldn't save this photo (storage may be full or unavailable). Please try again.");
+        }
       }, "image/jpeg", 0.7);
     };
   };

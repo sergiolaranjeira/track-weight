@@ -11,7 +11,7 @@ A lightweight, mobile-responsive web application designed to track a structured 
 
 * **Monday–Sunday Calendar View:** Displays structured weekly views with a shortened 5-day layout for Week 1 (starting Wednesday, Aug 26).
 * **Automated Daily Score (0–10 Scale):** Evaluates daily performance using a weighted rating engine:
-  * **40% Calories:** Rewards staying within the optimal 1,400–1,650 kcal target (or Sunday cheat allowance).
+  * **40% Calories:** Rewards eating at or near that day's full planned meal total (or Sunday cheat allowance).
   * **30% Meal Routine:** Evaluates 5-meal daily consistency.
   * **20% Exercise:** Tracks completed resistance/recovery workouts.
   * **10% Daily Steps:** Tracks hitting the 10,000-step threshold.
