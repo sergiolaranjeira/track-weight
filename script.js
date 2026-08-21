@@ -1,40 +1,4 @@
-let MEAL_CONFIG = {
-  profile: { heightM: 1.93, startWeightKg: 94, goalWeightKg: 85 },
-  defaultBreakfast: { name: "2 Boiled Eggs", cal: 140 },
-  defaultSnack1: { name: "Protein Shake OR 40g Jerky", cal: 150 },
-  defaultSnack2: { name: "Cottage Cheese OR Edamame", cal: 150 },
-  lunchesWeek1: [
-    { name: "Tikka Masala", cal: 490 }, { name: "Chili sin Carne", cal: 445 },
-    { name: "Coco Curry Pasta", cal: 540 }, { name: "Umami Rice", cal: 425 },
-    { name: "Brilliant Bolognese", cal: 520 }, { name: "Naked Taco", cal: 495 },
-    { name: "Smoky Lentil Stew", cal: 525 }
-  ],
-  lunchesWeek2: [
-    { name: "Peas & Love", cal: 545 }, { name: "Creamy Fricassée", cal: 450 },
-    { name: "Garden Gnocchi", cal: 470 }, { name: "Red Curry", cal: 470 },
-    { name: "Sesame Quinoa Salad", cal: 525 }, { name: "Bami Goreng", cal: 470 },
-    { name: "Potato Panorama", cal: 440 }
-  ],
-  dinnersWeek1: [
-    { name: "½ Green Forest Bowl + Greek Yogurt", cal: 365 }, { name: "½ Nasi Goreng + Greek Yogurt", cal: 365 },
-    { name: "½ Golden Glow Bowl + Greek Yogurt", cal: 395 }, { name: "½ Red Pesto Gnocchi + Greek Yogurt", cal: 400 },
-    { name: "½ Tikka Masala + Greek Yogurt", cal: 345 }, { name: "½ Chili sin Carne + Greek Yogurt", cal: 320 },
-    { name: "SUNDAY CHEAT MEAL (Enjoy with Wife!)", cal: 850, isCheat: true }
-  ],
-  dinnersWeek2: [
-    { name: "½ Nasi Goreng + Greek Yogurt", cal: 365 }, { name: "½ Golden Glow Bowl + Greek Yogurt", cal: 395 },
-    { name: "½ Red Pesto Gnocchi + Greek Yogurt", cal: 400 }, { name: "½ Tikka Masala + Greek Yogurt", cal: 345 },
-    { name: "½ Chili sin Carne + Greek Yogurt", cal: 320 }, { name: "½ Green Forest Bowl + Greek Yogurt", cal: 365 },
-    { name: "SUNDAY CHEAT MEAL (Enjoy with Wife!)", cal: 850, isCheat: true }
-  ]
-};
-
-const TOTAL_WEEKS = 10;
-const TASKS = ['m1', 'm2', 'm3', 'm4', 'm5', 'steps', 'exercise'];
-const mondayDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-
 let currentWeek = 1;
-let userState = {};
 let activeObjectUrls = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -51,20 +15,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateOverallProgress();
 });
 
-// Photos are stored as Blobs in IndexedDB instead of base64 in localStorage,
-// since localStorage quotas (~5-10MB) fill up fast with 10 weeks of images.
-const PHOTO_DB_NAME = "trackWeightPhotos";
-const PHOTO_STORE = "photos";
-
-function openPhotoDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(PHOTO_DB_NAME, 1);
-    req.onupgradeneeded = () => req.result.createObjectStore(PHOTO_STORE);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
 async function savePhoto(dayKey, blob) {
   const db = await openPhotoDB();
   return new Promise((resolve, reject) => {
@@ -72,15 +22,6 @@ async function savePhoto(dayKey, blob) {
     tx.objectStore(PHOTO_STORE).put(blob, dayKey);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
-  });
-}
-
-async function getPhoto(dayKey) {
-  const db = await openPhotoDB();
-  return new Promise((resolve, reject) => {
-    const req = db.transaction(PHOTO_STORE, "readonly").objectStore(PHOTO_STORE).get(dayKey);
-    req.onsuccess = () => resolve(req.result || null);
-    req.onerror = () => reject(req.error);
   });
 }
 
@@ -132,16 +73,6 @@ async function hydratePhotos() {
   }
 }
 
-// Resolves a meal's effective name/calories for one day, preferring a per-day
-// override (set via the editable fields) over the meals.json plan default.
-function getEffectiveMeal(dayData, taskId, defaultName, defaultCal, isCheat = false) {
-  const nameOverride = dayData[`${taskId}_name`];
-  const calOverride = dayData[`${taskId}_cal`];
-  const name = (nameOverride !== undefined && nameOverride !== '') ? nameOverride : defaultName;
-  const cal = (calOverride !== undefined && calOverride !== '') ? Number(calOverride) : defaultCal;
-  return { name, cal: isNaN(cal) ? 0 : cal, isCheat };
-}
-
 function updateMealOverride(dayKey, taskId, field, value) {
   if (!userState[dayKey]) userState[dayKey] = {};
   const key = field === 'cal' ? `${taskId}_cal` : `${taskId}_name`;
@@ -171,26 +102,8 @@ function renderProfileSubtitle() {
     `Personalized tracker for a ${heightM}m height profile, going from ${startWeightKg}kg to ${goalWeightKg}kg. Features Mon-Sun weekly views, exercise logs, Sunday progress photos, and weighted 0-10 daily quality scores.`;
 }
 
-async function fetchMealsJSON() {
-  try {
-    const res = await fetch('meals.json');
-    if (res.ok) {
-      MEAL_CONFIG = await res.json();
-    }
-  } catch (e) {
-    console.log("Loaded default meal config fallback.");
-  }
-}
-
-function loadState() {
-  const saved = localStorage.getItem("weightLossTracker_10weeks_v8");
-  if (saved) {
-    try { userState = JSON.parse(saved); } catch (e) { userState = {}; }
-  }
-}
-
 function saveState() {
-  localStorage.setItem("weightLossTracker_10weeks_v8", JSON.stringify(userState));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(userState));
   updateOverallProgress();
 }
 
@@ -209,59 +122,6 @@ function renderWeekSelector() {
     };
     container.appendChild(btn);
   }
-}
-
-function getFormattedDate(weekIndex, dayIndex) {
-  const startDate = new Date(2026, 7, 26);
-  
-  let daysToAdd = 0;
-  if (weekIndex === 1) {
-    daysToAdd = dayIndex - 2;
-  } else {
-    daysToAdd = 5 + ((weekIndex - 2) * 7) + dayIndex;
-  }
-  
-  const targetDate = new Date(startDate);
-  targetDate.setDate(startDate.getDate() + daysToAdd);
-  return targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-// AUTOMATED DAILY QUALITY SCORE (0-10 SCALE)
-function calculateDayScore(dayData, dayConsumedCal, totalPlannedCal, isCheat) {
-  let score = 0;
-
-  // 1. Calorie Target (4.0 Points Max / 40%)
-  // Scored relative to that day's own planned total (rather than a fixed kcal band) so that
-  // checking every meal always earns full marks, even after the meal plan is edited in meals.json.
-  if (dayConsumedCal > 0) {
-    if (isCheat) {
-      if (dayConsumedCal <= 2100) score += 4.0;
-      else if (dayConsumedCal <= 2400) score += 2.0;
-    } else {
-      const planRatio = dayConsumedCal / totalPlannedCal;
-      if (planRatio >= 0.95) {
-        score += 4.0;
-      } else if (planRatio >= 0.75) {
-        score += 2.0;
-      }
-    }
-  }
-
-  // 2. Meal Routine (3.0 Points Max / 30%)
-  const mealsChecked = ['m1', 'm2', 'm3', 'm4', 'm5'].filter(k => dayData[k]).length;
-  score += (mealsChecked * 0.6);
-
-  // 3. Exercise Routine (2.0 Points Max / 20%)
-  if (dayData.exercise) {
-    score += 2.0;
-  }
-
-  // 4. 10k Steps Target (1.0 Point Max / 10%)
-  if (dayData.steps) {
-    score += 1.0;
-  }
-
-  return Math.min(10, Math.round(score * 10) / 10);
 }
 
 function renderCurrentWeek() {
@@ -286,38 +146,15 @@ function renderCurrentWeek() {
   const startDayIndex = (currentWeek === 1) ? 2 : 0;
 
   for (let d = startDayIndex; d < 7; d++) {
-    const dayKey = `w${currentWeek}_d${d}`;
-    const dayData = userState[dayKey] || {};
-
-    const isMenuWeek1 = (currentWeek % 2 !== 0);
-    const lunchObj = isMenuWeek1 ? MEAL_CONFIG.lunchesWeek1[d] : MEAL_CONFIG.lunchesWeek2[d];
-    const dinnerObj = isMenuWeek1 ? MEAL_CONFIG.dinnersWeek1[d] : MEAL_CONFIG.dinnersWeek2[d];
+    const stats = computeDayStats(currentWeek, d);
+    const { dayKey, dayData, breakfast, snack1, lunch, snack2, dinner, dayConsumedCal, totalPlannedCal, isFullyDone, dateStr, score: dayScore, isCheat } = stats;
 
     const isSunday = (d === 6);
     const isWorkoutDay = (d === 0 || d === 2 || d === 4 || d === 5);
-    const exerciseText = isWorkoutDay 
-      ? `<span class="workout-tag">30-Min Workout</span>` 
+    const exerciseText = isWorkoutDay
+      ? `<span class="workout-tag">30-Min Workout</span>`
       : `<span class="rest-tag">Active Recovery Walk / Rest</span>`;
 
-    const breakfast = getEffectiveMeal(dayData, 'm1', MEAL_CONFIG.defaultBreakfast.name, MEAL_CONFIG.defaultBreakfast.cal);
-    const snack1 = getEffectiveMeal(dayData, 'm2', MEAL_CONFIG.defaultSnack1.name, MEAL_CONFIG.defaultSnack1.cal);
-    const lunch = getEffectiveMeal(dayData, 'm3', lunchObj.name, lunchObj.cal);
-    const snack2 = getEffectiveMeal(dayData, 'm4', MEAL_CONFIG.defaultSnack2.name, MEAL_CONFIG.defaultSnack2.cal);
-    const dinner = getEffectiveMeal(dayData, 'm5', dinnerObj.name, dinnerObj.cal, dinnerObj.isCheat);
-
-    let dayConsumedCal = 0;
-    if (dayData.m1) dayConsumedCal += breakfast.cal;
-    if (dayData.m2) dayConsumedCal += snack1.cal;
-    if (dayData.m3) dayConsumedCal += lunch.cal;
-    if (dayData.m4) dayConsumedCal += snack2.cal;
-    if (dayData.m5) dayConsumedCal += dinner.cal;
-
-    const totalPlannedCal = breakfast.cal + snack1.cal + lunch.cal + snack2.cal + dinner.cal;
-    const completedCount = TASKS.filter(k => dayData[k]).length;
-    const isFullyDone = completedCount === TASKS.length;
-    const dateStr = getFormattedDate(currentWeek, d);
-
-    const dayScore = calculateDayScore(dayData, dayConsumedCal, totalPlannedCal, dinnerObj.isCheat);
     let scoreClass = "score-low";
     if (dayScore >= 8.5) scoreClass = "score-high";
     else if (dayScore >= 6.0) scoreClass = "score-mid";
@@ -338,24 +175,28 @@ function renderCurrentWeek() {
       sundayExtrasHTML = `
         <div class="section-divider"></div>
         <div class="sunday-box">
-          <div class="box-title">Sunday Body Measurements (cm)</div>
+          <div class="box-title">Sunday Check-In</div>
           <div class="measure-grid">
             <div class="measure-field">
-              <label for="${dayKey}_waist">Belly/Waist</label>
+              <label for="${dayKey}_weight">Weight (kg)</label>
+              <input type="number" step="0.1" id="${dayKey}_weight" placeholder="kg" value="${dayData.weight || ''}" onchange="saveInputField('${dayKey}', 'weight', this.value)">
+            </div>
+            <div class="measure-field">
+              <label for="${dayKey}_waist">Belly/Waist (cm)</label>
               <input type="number" step="0.1" id="${dayKey}_waist" placeholder="cm" value="${dayData.waist || ''}" onchange="saveInputField('${dayKey}', 'waist', this.value)">
             </div>
             <div class="measure-field">
-              <label for="${dayKey}_chest">Chest</label>
+              <label for="${dayKey}_chest">Chest (cm)</label>
               <input type="number" step="0.1" id="${dayKey}_chest" placeholder="cm" value="${dayData.chest || ''}" onchange="saveInputField('${dayKey}', 'chest', this.value)">
             </div>
             <div class="measure-field">
-              <label for="${dayKey}_quads">Quads</label>
+              <label for="${dayKey}_quads">Quads (cm)</label>
               <input type="number" step="0.1" id="${dayKey}_quads" placeholder="cm" value="${dayData.quads || ''}" onchange="saveInputField('${dayKey}', 'quads', this.value)">
             </div>
           </div>
 
           <div class="section-divider" style="margin: 0.2rem 0;"></div>
-          
+
           <div class="photo-upload-zone">
             ${photoHTML}
           </div>
@@ -372,18 +213,18 @@ function renderCurrentWeek() {
           </div>
           <div class="header-badges">
             <span class="score-pill ${scoreClass}">★ ${dayScore} / 10</span>
-            <span class="calorie-pill ${dinnerObj.isCheat ? 'cheat' : ''}">${dayConsumedCal} / ${totalPlannedCal} kcal</span>
+            <span class="calorie-pill ${isCheat ? 'cheat' : ''}">${dayConsumedCal} / ${totalPlannedCal} kcal</span>
           </div>
         </div>
-        
+
         <div class="checklist">
           ${renderCheckItem(dayKey, 'm1', dayData.m1, 'Breakfast', breakfast.name, breakfast.cal, false, true)}
           ${renderCheckItem(dayKey, 'm2', dayData.m2, 'Morning Snack', snack1.name, snack1.cal, false, true)}
           ${renderCheckItem(dayKey, 'm3', dayData.m3, 'Lunch (Full Meal)', lunch.name, lunch.cal, false, true)}
           ${renderCheckItem(dayKey, 'm4', dayData.m4, 'Afternoon Snack', snack2.name, snack2.cal, false, true)}
-          ${renderCheckItem(dayKey, 'm5', dayData.m5, dinnerObj.isCheat ? 'Dinner (Cheat Meal 🎉)' : 'Dinner (½ Meal + Yogurt)', dinner.name, dinner.cal, dinnerObj.isCheat, true)}
+          ${renderCheckItem(dayKey, 'm5', dayData.m5, isCheat ? 'Dinner (Cheat Meal 🎉)' : 'Dinner (½ Meal + Yogurt)', dinner.name, dinner.cal, isCheat, true)}
           ${renderCheckItem(dayKey, 'steps', dayData.steps, '10,000 Steps', 'Daily movement goal', 0)}
-          
+
           ${renderCheckItem(dayKey, 'exercise', dayData.exercise, 'Exercise Routine', exerciseText, 0)}
           <div class="exercise-comment-box">
             <input type="text" id="${dayKey}_ex_notes" placeholder="Exercise Log (e.g. 30 Pushups, 5km walk...)" value="${dayData.ex_notes || ''}" onchange="saveInputField('${dayKey}', 'ex_notes', this.value)">
@@ -500,22 +341,7 @@ async function removePhoto(dayKey) {
 }
 
 function updateOverallProgress() {
-  let totalTasks = 0;
-  let completedTasks = 0;
-
-  for (let w = 1; w <= TOTAL_WEEKS; w++) {
-    const startDay = (w === 1) ? 2 : 0;
-    for (let d = startDay; d < 7; d++) {
-      const dayKey = `w${w}_d${d}`;
-      const dayData = userState[dayKey] || {};
-      TASKS.forEach(k => {
-        totalTasks++;
-        if (dayData[k]) completedTasks++;
-      });
-    }
-  }
-
-  const percent = Math.round((completedTasks / totalTasks) * 100);
+  const { percent } = computeOverallProgress();
   document.getElementById("overall-percentage").textContent = `${percent}%`;
   document.getElementById("overall-bar").style.width = `${percent}%`;
 }

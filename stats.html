@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Stats & Charts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <a class="btn-back" href="index.html">← Back to Tracker</a>
+
+  <header>
+    <div class="brand-badge">Stats & Charts</div>
+    <h1>Your Progress</h1>
+    <p class="subtitle" id="stats-subtitle">Where you stand against your goals, and what the day-to-day data says.</p>
+  </header>
+
+  <section class="stats-grid" id="stats-cards"></section>
+
+  <div class="charts-grid">
+    <div class="chart-card full-width">
+      <div class="chart-card-title">Weight vs. Goal</div>
+      <div class="chart-card-subtitle">Logged every Sunday check-in</div>
+      <div class="chart-canvas-wrap" id="weightChartWrap">
+        <canvas id="weightChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-title">Body Measurements</div>
+      <div class="chart-card-subtitle">Waist, chest, quads (cm)</div>
+      <div class="chart-canvas-wrap" id="measurementsChartWrap">
+        <canvas id="measurementsChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-title">Habit Consistency</div>
+      <div class="chart-card-subtitle">% of logged days each habit was completed</div>
+      <div class="chart-canvas-wrap" id="habitChartWrap">
+        <canvas id="habitChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card full-width">
+      <div class="chart-card-title">Daily Score Trend</div>
+      <div class="chart-card-subtitle">0-10 quality score for every logged day</div>
+      <div class="chart-canvas-wrap" id="scoreChartWrap">
+        <canvas id="scoreChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card full-width">
+      <div class="chart-card-title">Calories: Consumed vs. Planned</div>
+      <div class="chart-card-subtitle">Per logged day</div>
+      <div class="chart-canvas-wrap" id="caloriesChartWrap">
+        <canvas id="caloriesChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card full-width">
+      <div class="chart-card-title">Weekly Completion</div>
+      <div class="chart-card-subtitle">% of all checklist items completed, per week</div>
+      <div class="chart-canvas-wrap" id="weeklyChartWrap">
+        <canvas id="weeklyChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom: 1.25rem;">
+    <div class="chart-card-title">Progress Photos</div>
+    <div class="chart-card-subtitle">Your Sunday check-ins, in order</div>
+    <div class="photo-timeline" id="photo-timeline"></div>
+  </div>
+
+  <script src="shared.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="stats.js"></script>
+</body>
+</html>
