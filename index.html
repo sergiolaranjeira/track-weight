@@ -10,16 +10,22 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script>
+    if (!localStorage.getItem('weightLossTrackerConfig')) {
+      location.replace('config.html');
+    }
+  </script>
 </head>
 <body>
 
   <header>
-    <div class="brand-badge">Start Date: Wed Aug 26 • Mon-Sun Calendar</div>
+    <div class="brand-badge">Loading…</div>
     <h1>10-Week Transformation Plan</h1>
     <p class="subtitle" id="app-subtitle">Personalized tracker. Features Mon-Sun weekly views, exercise logs, Sunday progress photos, and weighted 0-10 daily quality scores.</p>
   </header>
 
-  <section class="dashboard-card">
+  <section class="dashboard-card" id="overall-progress">
+    <h2 class="visually-hidden">Overall Progress</h2>
     <div class="progress-header">
       <div class="progress-title">10-Week Overall Progress</div>
       <div class="progress-number" id="overall-percentage">0%</div>
@@ -29,15 +35,18 @@
     </div>
   </section>
 
-  <section class="quick-actions">
+  <section class="quick-actions" id="quick-actions">
+    <h2 class="visually-hidden">Quick Actions</h2>
     <a class="qa-btn" href="stats.html">📊<span>Charts</span></a>
+    <a class="qa-btn" href="config.html">⚙️<span>Settings</span></a>
     <button class="qa-btn" onclick="openLogEntryModal()">📏<span>Log Weight & Measures</span></button>
     <button class="qa-btn" onclick="exportData()">⬇️<span>Export Backup</span></button>
     <button class="qa-btn" onclick="triggerImport()">⬆️<span>Import Backup</span></button>
     <input type="file" id="import-file-input" accept="application/json" style="display:none" onchange="onImportFileSelected(this)">
   </section>
 
-  <section class="controls-wrapper">
+  <section class="controls-wrapper" id="week-controls">
+    <h2 class="visually-hidden">Week Controls</h2>
     <div class="week-nav" id="week-buttons-container"></div>
     <div class="action-bar">
       <div class="week-info-tag" id="week-info-title">Week 1 <span>Phase 1: Rapid Loss Phase</span></div>

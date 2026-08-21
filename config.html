@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <a class="btn-back" href="index.html">← Back to Tracker</a>
+
+  <header>
+    <div class="brand-badge">Configuration</div>
+    <h1>Settings</h1>
+    <p class="subtitle">Adjust your plan details, profile, default meals, and scoring thresholds.</p>
+  </header>
+
+  <form id="config-form" onsubmit="return false;">
+
+    <div class="cfg-section">
+      <div class="cfg-section-title">Your Profile</div>
+      <div class="cfg-grid">
+        <div class="cfg-field">
+          <label for="cfg-height">Height (m)</label>
+          <input type="number" id="cfg-height" step="0.01" min="1" max="2.5" placeholder="1.93">
+        </div>
+        <div class="cfg-field">
+          <label for="cfg-start-weight">Start Weight (kg)</label>
+          <input type="number" id="cfg-start-weight" step="0.1" min="30" max="300" placeholder="94">
+        </div>
+        <div class="cfg-field">
+          <label for="cfg-goal-weight">Goal Weight (kg)</label>
+          <input type="number" id="cfg-goal-weight" step="0.1" min="30" max="300" placeholder="85">
+        </div>
+      </div>
+    </div>
+
+    <div class="cfg-section">
+      <div class="cfg-section-title">Plan</div>
+      <div class="cfg-grid">
+        <div class="cfg-field">
+          <label for="cfg-start-date">Start Date</label>
+          <input type="date" id="cfg-start-date">
+        </div>
+        <div class="cfg-field">
+          <label for="cfg-total-weeks">Total Weeks</label>
+          <input type="number" id="cfg-total-weeks" step="1" min="1" max="52" placeholder="10">
+        </div>
+      </div>
+    </div>
+
+    <div class="cfg-section">
+      <div class="cfg-section-title">Default Meals</div>
+      <p class="cfg-section-desc">Used every day as the base plan. Individual days can still override these inline.</p>
+
+      <div class="cfg-meal-row">
+        <div class="cfg-meal-label">Breakfast</div>
+        <div class="cfg-meal-fields">
+          <div class="cfg-field cfg-field-grow">
+            <label for="cfg-b-name">Meal name</label>
+            <input type="text" id="cfg-b-name" placeholder="2 Boiled Eggs">
+          </div>
+          <div class="cfg-field cfg-field-cal">
+            <label for="cfg-b-cal">Calories</label>
+            <input type="number" id="cfg-b-cal" step="5" min="0" placeholder="140">
+          </div>
+        </div>
+      </div>
+
+      <div class="cfg-meal-row">
+        <div class="cfg-meal-label">Morning Snack</div>
+        <div class="cfg-meal-fields">
+          <div class="cfg-field cfg-field-grow">
+            <label for="cfg-s1-name">Meal name</label>
+            <input type="text" id="cfg-s1-name" placeholder="Protein Shake OR 40g Jerky">
+          </div>
+          <div class="cfg-field cfg-field-cal">
+            <label for="cfg-s1-cal">Calories</label>
+            <input type="number" id="cfg-s1-cal" step="5" min="0" placeholder="150">
+          </div>
+        </div>
+      </div>
+
+      <div class="cfg-meal-row">
+        <div class="cfg-meal-label">Afternoon Snack</div>
+        <div class="cfg-meal-fields">
+          <div class="cfg-field cfg-field-grow">
+            <label for="cfg-s2-name">Meal name</label>
+            <input type="text" id="cfg-s2-name" placeholder="Cottage Cheese OR Edamame">
+          </div>
+          <div class="cfg-field cfg-field-cal">
+            <label for="cfg-s2-cal">Calories</label>
+            <input type="number" id="cfg-s2-cal" step="5" min="0" placeholder="150">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cfg-section">
+      <div class="cfg-section-title">Scoring</div>
+      <p class="cfg-section-desc">Controls how the daily 0–10 quality score is calculated and displayed.</p>
+      <div class="cfg-grid">
+        <div class="cfg-field">
+          <label for="cfg-cheat-perfect">Cheat day — perfect limit (kcal)</label>
+          <input type="number" id="cfg-cheat-perfect" step="50" min="500" placeholder="2100">
+        </div>
+        <div class="cfg-field">
+          <label for="cfg-cheat-partial">Cheat day — partial limit (kcal)</label>
+          <input type="number" id="cfg-cheat-partial" step="50" min="500" placeholder="2400">
+        </div>
+        <div class="cfg-field">
+          <label for="cfg-score-high">Green score threshold (≥)</label>
+          <input type="number" id="cfg-score-high" step="0.5" min="0" max="10" placeholder="8.5">
+        </div>
+        <div class="cfg-field">
+          <label for="cfg-score-mid">Yellow score threshold (≥)</label>
+          <input type="number" id="cfg-score-mid" step="0.5" min="0" max="10" placeholder="6.0">
+        </div>
+      </div>
+    </div>
+
+    <div id="cfg-toast" class="cfg-toast" hidden></div>
+
+    <div class="cfg-actions">
+      <button type="button" class="btn-cfg-reset" onclick="resetToDefaults()">Reset to Defaults</button>
+      <button type="button" class="btn-cfg-save" onclick="saveSettings()">Save Settings</button>
+    </div>
+
+  </form>
+
+  <script src="shared.js"></script>
+  <script src="config.js"></script>
+</body>
+</html>

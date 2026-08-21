@@ -2,9 +2,66 @@
 // and the stats page (stats.js), so both stay in sync from one source of truth.
 
 const STORAGE_KEY = "weightLossTracker_10weeks_v8";
-const TOTAL_WEEKS = 10;
+const CONFIG_KEY = "weightLossTrackerConfig";
+let TOTAL_WEEKS = 10;
 const TASKS = ['m1', 'm2', 'm3', 'm4', 'm5', 'steps', 'exercise'];
 const mondayDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+const DEFAULT_CONFIG = {
+  planStartDate: "2026-08-26",
+  totalWeeks: 10,
+  profile: { heightM: 1.93, startWeightKg: 94, goalWeightKg: 85 },
+  defaultBreakfast: { name: "2 Boiled Eggs", cal: 140 },
+  defaultSnack1: { name: "Protein Shake OR 40g Jerky", cal: 150 },
+  defaultSnack2: { name: "Cottage Cheese OR Edamame", cal: 150 },
+  scoring: { cheatPerfectCal: 2100, cheatPartialCal: 2400, highThreshold: 8.5, midThreshold: 6.0 }
+};
+
+let APP_CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+
+function loadConfig() {
+  const saved = localStorage.getItem(CONFIG_KEY);
+  if (saved) {
+    try {
+      const p = JSON.parse(saved);
+      APP_CONFIG = {
+        ...DEFAULT_CONFIG, ...p,
+        profile: { ...DEFAULT_CONFIG.profile, ...(p.profile || {}) },
+        defaultBreakfast: { ...DEFAULT_CONFIG.defaultBreakfast, ...(p.defaultBreakfast || {}) },
+        defaultSnack1: { ...DEFAULT_CONFIG.defaultSnack1, ...(p.defaultSnack1 || {}) },
+        defaultSnack2: { ...DEFAULT_CONFIG.defaultSnack2, ...(p.defaultSnack2 || {}) },
+        scoring: { ...DEFAULT_CONFIG.scoring, ...(p.scoring || {}) }
+      };
+    } catch (e) {
+      APP_CONFIG = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    }
+  }
+  TOTAL_WEEKS = APP_CONFIG.totalWeeks;
+  MEAL_CONFIG.profile = APP_CONFIG.profile;
+  MEAL_CONFIG.defaultBreakfast = APP_CONFIG.defaultBreakfast;
+  MEAL_CONFIG.defaultSnack1 = APP_CONFIG.defaultSnack1;
+  MEAL_CONFIG.defaultSnack2 = APP_CONFIG.defaultSnack2;
+}
+
+function saveConfig(cfg) {
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+  APP_CONFIG = cfg;
+  TOTAL_WEEKS = cfg.totalWeeks;
+}
+
+function getStartDate() {
+  try {
+    const [y, m, d] = APP_CONFIG.planStartDate.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  } catch (e) {
+    return new Date(2026, 7, 26);
+  }
+}
+
+// Returns the Mon-Sun day index (Mon=0..Sun=6) that week 1 starts on.
+function getWeek1StartDayIndex() {
+  return (getStartDate().getDay() + 6) % 7;
+}
 
 let MEAL_CONFIG = {
   profile: { heightM: 1.93, startWeightKg: 94, goalWeightKg: 85 },
@@ -58,15 +115,11 @@ function loadState() {
 }
 
 function getActualDate(weekIndex, dayIndex) {
-  const startDate = new Date(2026, 7, 26);
-
-  let daysToAdd = 0;
-  if (weekIndex === 1) {
-    daysToAdd = dayIndex - 2;
-  } else {
-    daysToAdd = 5 + ((weekIndex - 2) * 7) + dayIndex;
-  }
-
+  const startDate = getStartDate();
+  const s = getWeek1StartDayIndex();
+  const daysToAdd = weekIndex === 1
+    ? dayIndex - s
+    : (7 - s) + ((weekIndex - 2) * 7) + dayIndex;
   const targetDate = new Date(startDate);
   targetDate.setDate(startDate.getDate() + daysToAdd);
   return targetDate;
@@ -105,8 +158,8 @@ function calculateDayScore(dayData, dayConsumedCal, totalPlannedCal, isCheat) {
   // checking every meal always earns full marks, even after the meal plan is edited in meals.json.
   if (dayConsumedCal > 0) {
     if (isCheat) {
-      if (dayConsumedCal <= 2100) score += 4.0;
-      else if (dayConsumedCal <= 2400) score += 2.0;
+      if (dayConsumedCal <= APP_CONFIG.scoring.cheatPerfectCal) score += 4.0;
+      else if (dayConsumedCal <= APP_CONFIG.scoring.cheatPartialCal) score += 2.0;
     } else {
       const planRatio = dayConsumedCal / totalPlannedCal;
       if (planRatio >= 0.95) {
@@ -134,11 +187,12 @@ function calculateDayScore(dayData, dayConsumedCal, totalPlannedCal, isCheat) {
   return Math.min(10, Math.round(score * 10) / 10);
 }
 
-// Every {week, day} slot in the 10-week plan, in chronological order.
+// Every {week, day} slot in the plan, in chronological order.
 function getAllPlanDays() {
   const days = [];
+  const week1Start = getWeek1StartDayIndex();
   for (let w = 1; w <= TOTAL_WEEKS; w++) {
-    const startDay = (w === 1) ? 2 : 0;
+    const startDay = (w === 1) ? week1Start : 0;
     for (let d = startDay; d < 7; d++) {
       days.push({ week: w, day: d, dayKey: `w${w}_d${d}` });
     }

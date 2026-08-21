@@ -15,6 +15,7 @@ Chart.defaults.font.family = "'Plus Jakarta Sans', -apple-system, BlinkMacSystem
 
 document.addEventListener("DOMContentLoaded", async () => {
   await fetchMealsJSON();
+  loadConfig();
   loadState();
 
   const allDays = getAllPlanDays().map(({ week, day }) => computeDayStats(week, day));
