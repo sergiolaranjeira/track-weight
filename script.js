@@ -15,6 +15,39 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateOverallProgress();
 });
 
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeModal();
+});
+
+// --- Modal system (used for confirmations and the quick-entry form) ---
+
+function showModal(innerHTML) {
+  document.getElementById("modal-box").innerHTML = innerHTML;
+  document.getElementById("modal-overlay").hidden = false;
+}
+
+function closeModal() {
+  const overlay = document.getElementById("modal-overlay");
+  if (overlay.hidden) return;
+  overlay.hidden = true;
+  document.getElementById("modal-box").innerHTML = "";
+}
+
+function showConfirmModal(title, message, onConfirm, confirmLabel = "Confirm", danger = true) {
+  showModal(`
+    <div class="modal-title">${title}</div>
+    <div class="modal-message">${message}</div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-modal-confirm ${danger ? 'btn-modal-danger' : ''}" id="modal-confirm-btn">${confirmLabel}</button>
+    </div>
+  `);
+  document.getElementById("modal-confirm-btn").onclick = () => {
+    closeModal();
+    onConfirm();
+  };
+}
+
 async function savePhoto(dayKey, blob) {
   const db = await openPhotoDB();
   return new Promise((resolve, reject) => {
@@ -331,13 +364,18 @@ function handlePhotoUpload(dayKey, input) {
   reader.readAsDataURL(file);
 }
 
-async function removePhoto(dayKey) {
-  if (confirm("Delete this progress photo?")) {
-    await deletePhoto(dayKey);
-    delete userState[dayKey].hasPhoto;
-    saveState();
-    renderCurrentWeek();
-  }
+function removePhoto(dayKey) {
+  showConfirmModal(
+    "Delete Photo",
+    "This progress photo will be permanently deleted.",
+    async () => {
+      await deletePhoto(dayKey);
+      delete userState[dayKey].hasPhoto;
+      saveState();
+      renderCurrentWeek();
+    },
+    "Delete Photo"
+  );
 }
 
 function updateOverallProgress() {
@@ -346,11 +384,199 @@ function updateOverallProgress() {
   document.getElementById("overall-bar").style.width = `${percent}%`;
 }
 
-async function resetAllData() {
-  if (confirm("Reset all tracked progress, photos, notes, and body measurements?")) {
-    userState = {};
+function resetAllData() {
+  showConfirmModal(
+    "Reset All Data",
+    "This will permanently delete all tracked progress, photos, notes, and body measurements. This cannot be undone.",
+    async () => {
+      userState = {};
+      await clearAllPhotos();
+      saveState();
+      renderCurrentWeek();
+    },
+    "Reset Everything"
+  );
+}
+
+// --- Quick-entry: log weight/measurements for any day, not just Sundays ---
+
+function openLogEntryModal() {
+  const todayPlanDay = findPlanDayForDate(new Date());
+  const defaultWeek = todayPlanDay ? todayPlanDay.week : currentWeek;
+  const defaultDay = todayPlanDay ? todayPlanDay.day : (currentWeek === 1 ? 2 : 0);
+
+  const weekOptions = Array.from({ length: TOTAL_WEEKS }, (_, i) => i + 1)
+    .map(w => `<option value="${w}" ${w === defaultWeek ? 'selected' : ''}>Week ${w}</option>`)
+    .join('');
+
+  showModal(`
+    <div class="modal-title">Log Weight & Measurements</div>
+    <div class="modal-message">Record an entry for any day in your plan — not just Sundays.</div>
+    <div class="modal-field-row">
+      <div class="modal-field">
+        <label for="log-week-select">Week</label>
+        <select id="log-week-select" onchange="populateLogDaySelect()">${weekOptions}</select>
+      </div>
+      <div class="modal-field">
+        <label for="log-day-select">Day</label>
+        <select id="log-day-select" onchange="prefillLogEntryFields()"></select>
+      </div>
+    </div>
+    <div class="modal-field-row">
+      <div class="modal-field">
+        <label for="log-weight-input">Weight (kg)</label>
+        <input type="number" step="0.1" id="log-weight-input" placeholder="kg">
+      </div>
+      <div class="modal-field">
+        <label for="log-waist-input">Waist (cm)</label>
+        <input type="number" step="0.1" id="log-waist-input" placeholder="cm">
+      </div>
+    </div>
+    <div class="modal-field-row">
+      <div class="modal-field">
+        <label for="log-chest-input">Chest (cm)</label>
+        <input type="number" step="0.1" id="log-chest-input" placeholder="cm">
+      </div>
+      <div class="modal-field">
+        <label for="log-quads-input">Quads (cm)</label>
+        <input type="number" step="0.1" id="log-quads-input" placeholder="cm">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-modal-confirm" onclick="saveLogEntry()">Save Entry</button>
+    </div>
+  `);
+
+  populateLogDaySelect(defaultDay);
+}
+
+function populateLogDaySelect(preselectDay) {
+  const week = parseInt(document.getElementById('log-week-select').value, 10);
+  const daySelect = document.getElementById('log-day-select');
+  const startDay = week === 1 ? 2 : 0;
+
+  const options = [];
+  for (let d = startDay; d < 7; d++) {
+    options.push(`<option value="${d}">${mondayDays[d]} · ${getFormattedDate(week, d)}</option>`);
+  }
+  daySelect.innerHTML = options.join('');
+
+  if (preselectDay !== undefined && preselectDay >= startDay) {
+    daySelect.value = preselectDay;
+  }
+
+  prefillLogEntryFields();
+}
+
+function prefillLogEntryFields() {
+  const week = parseInt(document.getElementById('log-week-select').value, 10);
+  const day = parseInt(document.getElementById('log-day-select').value, 10);
+  const dayData = userState[`w${week}_d${day}`] || {};
+
+  document.getElementById('log-weight-input').value = dayData.weight || '';
+  document.getElementById('log-waist-input').value = dayData.waist || '';
+  document.getElementById('log-chest-input').value = dayData.chest || '';
+  document.getElementById('log-quads-input').value = dayData.quads || '';
+}
+
+function saveLogEntry() {
+  const week = parseInt(document.getElementById('log-week-select').value, 10);
+  const day = parseInt(document.getElementById('log-day-select').value, 10);
+  const dayKey = `w${week}_d${day}`;
+
+  if (!userState[dayKey]) userState[dayKey] = {};
+  ['weight', 'waist', 'chest', 'quads'].forEach(field => {
+    userState[dayKey][field] = document.getElementById(`log-${field}-input`).value;
+  });
+
+  saveState();
+  if (week === currentWeek) renderCurrentWeek();
+  closeModal();
+}
+
+// --- Export / Import backup ---
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function exportData() {
+  const photos = {};
+  for (const { dayKey } of getAllPlanDays()) {
+    const blob = await getPhoto(dayKey);
+    if (blob) photos[dayKey] = await blobToBase64(blob);
+  }
+
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    userState,
+    photos
+  };
+
+  const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `track-weight-backup-${payload.exportedAt.slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function triggerImport() {
+  document.getElementById('import-file-input').click();
+}
+
+function onImportFileSelected(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  showConfirmModal(
+    "Import Backup",
+    `This will overwrite your current tracker data (progress, notes, measurements, and photos) with the contents of "${escapeAttr(file.name)}". This cannot be undone.`,
+    async () => {
+      try {
+        await importDataFromFile(file);
+      } finally {
+        input.value = '';
+      }
+    },
+    "Import & Overwrite"
+  );
+}
+
+async function importDataFromFile(file) {
+  try {
+    const text = await file.text();
+    const payload = JSON.parse(text);
+
+    if (!payload || typeof payload.userState !== 'object') {
+      throw new Error("Backup file is missing userState");
+    }
+
+    userState = payload.userState;
     await clearAllPhotos();
     saveState();
+
+    if (payload.photos) {
+      for (const [dayKey, dataUrl] of Object.entries(payload.photos)) {
+        const blob = await (await fetch(dataUrl)).blob();
+        await savePhoto(dayKey, blob);
+      }
+    }
+
     renderCurrentWeek();
+    alert("Backup imported successfully.");
+  } catch (err) {
+    console.error("Import failed:", err);
+    alert("Couldn't import this file — it doesn't look like a valid track-weight backup.");
   }
 }

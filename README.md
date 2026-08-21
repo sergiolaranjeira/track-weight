@@ -18,6 +18,9 @@ A lightweight, mobile-responsive web application designed to track a structured 
 * **Sunday Progress Check-Ins:**
   * **Weight & Body Diameter Tracking:** Record weight, belly/waist, chest, and quad measurements every Sunday.
   * **Progress Photo Upload:** Upload progress pictures directly from your mobile camera or gallery. Photos are automatically compressed and stored locally.
+* **Quick Actions:** One-tap access to the stats page, a "Log Weight & Measurements" form that can log an entry for *any* day in the plan (not just Sundays), and backup export/import.
+* **Backup Export / Import:** Download your entire tracker (progress, notes, measurements, and photos) as a single JSON file, and restore it later or on another device.
+* **Confirm Modals:** Destructive actions (Reset All, deleting a photo, importing a backup) ask for confirmation through an in-app modal instead of a browser popup.
 * **Exercise Logging:** Dedicated comment box for logging specific workouts (e.g., sets, reps, distance, or cardio duration).
 * **Editable Meals:** Each meal's description and calorie value can be edited per day, so a logged day can reflect what you actually ate instead of only the pre-planned meal.
 * **Dynamic Calorie Counter:** Calculates live consumed vs. target calorie totals based on checked items.

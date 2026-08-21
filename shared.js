@@ -57,7 +57,7 @@ function loadState() {
   }
 }
 
-function getFormattedDate(weekIndex, dayIndex) {
+function getActualDate(weekIndex, dayIndex) {
   const startDate = new Date(2026, 7, 26);
 
   let daysToAdd = 0;
@@ -69,7 +69,21 @@ function getFormattedDate(weekIndex, dayIndex) {
 
   const targetDate = new Date(startDate);
   targetDate.setDate(startDate.getDate() + daysToAdd);
-  return targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return targetDate;
+}
+
+function getFormattedDate(weekIndex, dayIndex) {
+  return getActualDate(weekIndex, dayIndex).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// Finds the {week, day, dayKey} plan slot matching a given calendar date, or null
+// if the date falls outside the 10-week plan. Used to default quick-entry forms to "today".
+function findPlanDayForDate(date) {
+  const targetTime = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  return getAllPlanDays().find(({ week, day }) => {
+    const d = getActualDate(week, day);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() === targetTime;
+  }) || null;
 }
 
 // Resolves a meal's effective name/calories for one day, preferring a per-day
