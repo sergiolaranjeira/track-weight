@@ -35,15 +35,98 @@ const mondayDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Sat
 
 let currentWeek = 1;
 let userState = {};
+let activeObjectUrls = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
   await fetchMealsJSON();
   renderProfileSubtitle();
   loadState();
+  await migrateLegacyPhotos();
   renderWeekSelector();
   renderCurrentWeek();
   updateOverallProgress();
 });
+
+// Photos are stored as Blobs in IndexedDB instead of base64 in localStorage,
+// since localStorage quotas (~5-10MB) fill up fast with 10 weeks of images.
+const PHOTO_DB_NAME = "trackWeightPhotos";
+const PHOTO_STORE = "photos";
+
+function openPhotoDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(PHOTO_DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(PHOTO_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function savePhoto(dayKey, blob) {
+  const db = await openPhotoDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(PHOTO_STORE, "readwrite");
+    tx.objectStore(PHOTO_STORE).put(blob, dayKey);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function getPhoto(dayKey) {
+  const db = await openPhotoDB();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(PHOTO_STORE, "readonly").objectStore(PHOTO_STORE).get(dayKey);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function deletePhoto(dayKey) {
+  const db = await openPhotoDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(PHOTO_STORE, "readwrite");
+    tx.objectStore(PHOTO_STORE).delete(dayKey);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function clearAllPhotos() {
+  const db = await openPhotoDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(PHOTO_STORE, "readwrite");
+    tx.objectStore(PHOTO_STORE).clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// One-time migration for photos saved by older versions as base64 in userState.
+async function migrateLegacyPhotos() {
+  let migrated = false;
+  for (const dayKey of Object.keys(userState)) {
+    const dayData = userState[dayKey];
+    if (dayData && dayData.photo) {
+      const blob = await (await fetch(dayData.photo)).blob();
+      await savePhoto(dayKey, blob);
+      dayData.hasPhoto = true;
+      delete dayData.photo;
+      migrated = true;
+    }
+  }
+  if (migrated) saveState();
+}
+
+async function hydratePhotos() {
+  const imgs = document.querySelectorAll(".photo-lazy");
+  for (const img of imgs) {
+    const blob = await getPhoto(img.dataset.daykey);
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      activeObjectUrls.push(url);
+      img.src = url;
+    }
+  }
+}
 
 function renderProfileSubtitle() {
   const { heightM, startWeightKg, goalWeightKg } = MEAL_CONFIG.profile;
@@ -142,6 +225,9 @@ function calculateDayScore(dayData, dayConsumedCal, isCheat) {
 }
 
 function renderCurrentWeek() {
+  activeObjectUrls.forEach(url => URL.revokeObjectURL(url));
+  activeObjectUrls = [];
+
   const infoTag = document.getElementById("week-info-title");
   let phaseText = "";
   if (currentWeek <= 2) {
@@ -195,8 +281,8 @@ function renderCurrentWeek() {
 
     let sundayExtrasHTML = "";
     if (isSunday) {
-      const photoHTML = dayData.photo 
-        ? `<img src="${dayData.photo}" class="photo-preview" alt="Progress Photo">
+      const photoHTML = dayData.hasPhoto
+        ? `<img data-daykey="${dayKey}" class="photo-preview photo-lazy" alt="Progress Photo">
            <button class="btn-remove-photo" onclick="removePhoto('${dayKey}')">Remove Photo</button>`
         : `<button class="btn-photo" onclick="document.getElementById('${dayKey}_file').click()">
              📷 Upload Progress Photo
@@ -269,6 +355,8 @@ function renderCurrentWeek() {
 
     grid.appendChild(card);
   }
+
+  hydratePhotos();
 }
 
 function renderCheckItem(dayKey, taskId, isChecked, title, desc, cal, isCheat = false) {
@@ -329,16 +417,19 @@ function handlePhotoUpload(dayKey, input) {
       const ctx = canvas.getContext("2d");
       ctx.drawImage(img, 0, 0, width, height);
 
-      const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
-      saveInputField(dayKey, 'photo', compressedBase64);
+      canvas.toBlob(async (blob) => {
+        await savePhoto(dayKey, blob);
+        saveInputField(dayKey, 'hasPhoto', true);
+      }, "image/jpeg", 0.7);
     };
   };
   reader.readAsDataURL(file);
 }
 
-function removePhoto(dayKey) {
+async function removePhoto(dayKey) {
   if (confirm("Delete this progress photo?")) {
-    delete userState[dayKey].photo;
+    await deletePhoto(dayKey);
+    delete userState[dayKey].hasPhoto;
     saveState();
     renderCurrentWeek();
   }
@@ -365,9 +456,10 @@ function updateOverallProgress() {
   document.getElementById("overall-bar").style.width = `${percent}%`;
 }
 
-function resetAllData() {
+async function resetAllData() {
   if (confirm("Reset all tracked progress, photos, notes, and body measurements?")) {
     userState = {};
+    await clearAllPhotos();
     saveState();
     renderCurrentWeek();
   }

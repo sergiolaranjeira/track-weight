@@ -21,7 +21,7 @@ A lightweight, mobile-responsive web application designed to track a structured 
 * **Exercise Logging:** Dedicated comment box for logging specific workouts (e.g., sets, reps, distance, or cardio duration).
 * **Dynamic Calorie Counter:** Calculates live consumed vs. target calorie totals based on checked items.
 * **External JSON Meal Config (`meals.json`):** Centralized file to easily edit meal names and calorie values without modifying application logic.
-* **100% Client-Side Privacy:** All user data (progress, measurements, notes, and photos) is saved strictly in your browser's `localStorage`.
+* **100% Client-Side Privacy:** All user data stays in your browser — progress, measurements, and notes in `localStorage`, and photos as compressed blobs in `IndexedDB` (which has a much higher storage quota than `localStorage`).
 
 ---
 
