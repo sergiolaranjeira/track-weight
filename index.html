@@ -33,12 +33,16 @@
     <div class="week-nav" id="week-buttons-container"></div>
     <div class="action-bar">
       <div class="week-info-tag" id="week-info-title">Week 1 <span>Phase 1: Rapid Loss Phase</span></div>
-      <button class="btn-reset" onclick="resetAllData()">Reset All</button>
+      <div class="action-bar-buttons">
+        <a class="btn-stats" href="stats.html">📊 Stats</a>
+        <button class="btn-reset" onclick="resetAllData()">Reset All</button>
+      </div>
     </div>
   </section>
 
   <main class="days-grid" id="days-grid-container"></main>
 
+  <script src="shared.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

@@ -1,0 +1,220 @@
+// Data loading and calculation logic shared between the tracker (script.js)
+// and the stats page (stats.js), so both stay in sync from one source of truth.
+
+const STORAGE_KEY = "weightLossTracker_10weeks_v8";
+const TOTAL_WEEKS = 10;
+const TASKS = ['m1', 'm2', 'm3', 'm4', 'm5', 'steps', 'exercise'];
+const mondayDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+let MEAL_CONFIG = {
+  profile: { heightM: 1.93, startWeightKg: 94, goalWeightKg: 85 },
+  defaultBreakfast: { name: "2 Boiled Eggs", cal: 140 },
+  defaultSnack1: { name: "Protein Shake OR 40g Jerky", cal: 150 },
+  defaultSnack2: { name: "Cottage Cheese OR Edamame", cal: 150 },
+  lunchesWeek1: [
+    { name: "Tikka Masala", cal: 490 }, { name: "Chili sin Carne", cal: 445 },
+    { name: "Coco Curry Pasta", cal: 540 }, { name: "Umami Rice", cal: 425 },
+    { name: "Brilliant Bolognese", cal: 520 }, { name: "Naked Taco", cal: 495 },
+    { name: "Smoky Lentil Stew", cal: 525 }
+  ],
+  lunchesWeek2: [
+    { name: "Peas & Love", cal: 545 }, { name: "Creamy Fricassée", cal: 450 },
+    { name: "Garden Gnocchi", cal: 470 }, { name: "Red Curry", cal: 470 },
+    { name: "Sesame Quinoa Salad", cal: 525 }, { name: "Bami Goreng", cal: 470 },
+    { name: "Potato Panorama", cal: 440 }
+  ],
+  dinnersWeek1: [
+    { name: "½ Green Forest Bowl + Greek Yogurt", cal: 365 }, { name: "½ Nasi Goreng + Greek Yogurt", cal: 365 },
+    { name: "½ Golden Glow Bowl + Greek Yogurt", cal: 395 }, { name: "½ Red Pesto Gnocchi + Greek Yogurt", cal: 400 },
+    { name: "½ Tikka Masala + Greek Yogurt", cal: 345 }, { name: "½ Chili sin Carne + Greek Yogurt", cal: 320 },
+    { name: "SUNDAY CHEAT MEAL (Enjoy with Wife!)", cal: 850, isCheat: true }
+  ],
+  dinnersWeek2: [
+    { name: "½ Nasi Goreng + Greek Yogurt", cal: 365 }, { name: "½ Golden Glow Bowl + Greek Yogurt", cal: 395 },
+    { name: "½ Red Pesto Gnocchi + Greek Yogurt", cal: 400 }, { name: "½ Tikka Masala + Greek Yogurt", cal: 345 },
+    { name: "½ Chili sin Carne + Greek Yogurt", cal: 320 }, { name: "½ Green Forest Bowl + Greek Yogurt", cal: 365 },
+    { name: "SUNDAY CHEAT MEAL (Enjoy with Wife!)", cal: 850, isCheat: true }
+  ]
+};
+
+let userState = {};
+
+async function fetchMealsJSON() {
+  try {
+    const res = await fetch('meals.json');
+    if (res.ok) {
+      MEAL_CONFIG = await res.json();
+    }
+  } catch (e) {
+    console.log("Loaded default meal config fallback.");
+  }
+}
+
+function loadState() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try { userState = JSON.parse(saved); } catch (e) { userState = {}; }
+  }
+}
+
+function getFormattedDate(weekIndex, dayIndex) {
+  const startDate = new Date(2026, 7, 26);
+
+  let daysToAdd = 0;
+  if (weekIndex === 1) {
+    daysToAdd = dayIndex - 2;
+  } else {
+    daysToAdd = 5 + ((weekIndex - 2) * 7) + dayIndex;
+  }
+
+  const targetDate = new Date(startDate);
+  targetDate.setDate(startDate.getDate() + daysToAdd);
+  return targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// Resolves a meal's effective name/calories for one day, preferring a per-day
+// override (set via the editable fields) over the meals.json plan default.
+function getEffectiveMeal(dayData, taskId, defaultName, defaultCal, isCheat = false) {
+  const nameOverride = dayData[`${taskId}_name`];
+  const calOverride = dayData[`${taskId}_cal`];
+  const name = (nameOverride !== undefined && nameOverride !== '') ? nameOverride : defaultName;
+  const cal = (calOverride !== undefined && calOverride !== '') ? Number(calOverride) : defaultCal;
+  return { name, cal: isNaN(cal) ? 0 : cal, isCheat };
+}
+
+// AUTOMATED DAILY QUALITY SCORE (0-10 SCALE)
+function calculateDayScore(dayData, dayConsumedCal, totalPlannedCal, isCheat) {
+  let score = 0;
+
+  // 1. Calorie Target (4.0 Points Max / 40%)
+  // Scored relative to that day's own planned total (rather than a fixed kcal band) so that
+  // checking every meal always earns full marks, even after the meal plan is edited in meals.json.
+  if (dayConsumedCal > 0) {
+    if (isCheat) {
+      if (dayConsumedCal <= 2100) score += 4.0;
+      else if (dayConsumedCal <= 2400) score += 2.0;
+    } else {
+      const planRatio = dayConsumedCal / totalPlannedCal;
+      if (planRatio >= 0.95) {
+        score += 4.0;
+      } else if (planRatio >= 0.75) {
+        score += 2.0;
+      }
+    }
+  }
+
+  // 2. Meal Routine (3.0 Points Max / 30%)
+  const mealsChecked = ['m1', 'm2', 'm3', 'm4', 'm5'].filter(k => dayData[k]).length;
+  score += (mealsChecked * 0.6);
+
+  // 3. Exercise Routine (2.0 Points Max / 20%)
+  if (dayData.exercise) {
+    score += 2.0;
+  }
+
+  // 4. 10k Steps Target (1.0 Point Max / 10%)
+  if (dayData.steps) {
+    score += 1.0;
+  }
+
+  return Math.min(10, Math.round(score * 10) / 10);
+}
+
+// Every {week, day} slot in the 10-week plan, in chronological order.
+function getAllPlanDays() {
+  const days = [];
+  for (let w = 1; w <= TOTAL_WEEKS; w++) {
+    const startDay = (w === 1) ? 2 : 0;
+    for (let d = startDay; d < 7; d++) {
+      days.push({ week: w, day: d, dayKey: `w${w}_d${d}` });
+    }
+  }
+  return days;
+}
+
+// True if the user has actually interacted with this day (vs. an untouched default {}).
+function hasAnyData(dayData) {
+  if (!dayData) return false;
+  return Object.keys(dayData).some(k => {
+    const v = dayData[k];
+    return v === true || typeof v === 'number' || (typeof v === 'string' && v.trim() !== '');
+  });
+}
+
+// Full computed stats for one day: effective meals, calories, completion, and score.
+// Single source of truth so the tracker view and the stats page can't drift apart.
+function computeDayStats(weekIndex, dayIndex) {
+  const dayKey = `w${weekIndex}_d${dayIndex}`;
+  const dayData = userState[dayKey] || {};
+
+  const isMenuWeek1 = (weekIndex % 2 !== 0);
+  const lunchObj = isMenuWeek1 ? MEAL_CONFIG.lunchesWeek1[dayIndex] : MEAL_CONFIG.lunchesWeek2[dayIndex];
+  const dinnerObj = isMenuWeek1 ? MEAL_CONFIG.dinnersWeek1[dayIndex] : MEAL_CONFIG.dinnersWeek2[dayIndex];
+
+  const breakfast = getEffectiveMeal(dayData, 'm1', MEAL_CONFIG.defaultBreakfast.name, MEAL_CONFIG.defaultBreakfast.cal);
+  const snack1 = getEffectiveMeal(dayData, 'm2', MEAL_CONFIG.defaultSnack1.name, MEAL_CONFIG.defaultSnack1.cal);
+  const lunch = getEffectiveMeal(dayData, 'm3', lunchObj.name, lunchObj.cal);
+  const snack2 = getEffectiveMeal(dayData, 'm4', MEAL_CONFIG.defaultSnack2.name, MEAL_CONFIG.defaultSnack2.cal);
+  const dinner = getEffectiveMeal(dayData, 'm5', dinnerObj.name, dinnerObj.cal, dinnerObj.isCheat);
+
+  let dayConsumedCal = 0;
+  if (dayData.m1) dayConsumedCal += breakfast.cal;
+  if (dayData.m2) dayConsumedCal += snack1.cal;
+  if (dayData.m3) dayConsumedCal += lunch.cal;
+  if (dayData.m4) dayConsumedCal += snack2.cal;
+  if (dayData.m5) dayConsumedCal += dinner.cal;
+
+  const totalPlannedCal = breakfast.cal + snack1.cal + lunch.cal + snack2.cal + dinner.cal;
+  const completedCount = TASKS.filter(k => dayData[k]).length;
+  const score = calculateDayScore(dayData, dayConsumedCal, totalPlannedCal, dinnerObj.isCheat);
+
+  return {
+    dayKey, weekIndex, dayIndex, dayData,
+    dayName: mondayDays[dayIndex],
+    dateStr: getFormattedDate(weekIndex, dayIndex),
+    breakfast, snack1, lunch, snack2, dinner,
+    dayConsumedCal, totalPlannedCal, completedCount,
+    isFullyDone: completedCount === TASKS.length,
+    isCheat: !!dinnerObj.isCheat,
+    score
+  };
+}
+
+function computeOverallProgress() {
+  let totalTasks = 0;
+  let completedTasks = 0;
+
+  getAllPlanDays().forEach(({ week, day }) => {
+    const dayData = userState[`w${week}_d${day}`] || {};
+    TASKS.forEach(k => {
+      totalTasks++;
+      if (dayData[k]) completedTasks++;
+    });
+  });
+
+  const percent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  return { percent, completedTasks, totalTasks };
+}
+
+// Photos are stored as Blobs in IndexedDB instead of base64 in localStorage,
+// since localStorage quotas (~5-10MB) fill up fast with 10 weeks of images.
+const PHOTO_DB_NAME = "trackWeightPhotos";
+const PHOTO_STORE = "photos";
+
+function openPhotoDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(PHOTO_DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(PHOTO_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function getPhoto(dayKey) {
+  const db = await openPhotoDB();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(PHOTO_STORE, "readonly").objectStore(PHOTO_STORE).get(dayKey);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}

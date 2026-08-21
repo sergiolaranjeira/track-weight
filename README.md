@@ -16,11 +16,13 @@ A lightweight, mobile-responsive web application designed to track a structured 
   * **20% Exercise:** Tracks completed resistance/recovery workouts.
   * **10% Daily Steps:** Tracks hitting the 10,000-step threshold.
 * **Sunday Progress Check-Ins:**
-  * **Body Diameter Tracking:** Record belly/waist, chest, and quad measurements every Sunday.
+  * **Weight & Body Diameter Tracking:** Record weight, belly/waist, chest, and quad measurements every Sunday.
   * **Progress Photo Upload:** Upload progress pictures directly from your mobile camera or gallery. Photos are automatically compressed and stored locally.
 * **Exercise Logging:** Dedicated comment box for logging specific workouts (e.g., sets, reps, distance, or cardio duration).
+* **Editable Meals:** Each meal's description and calorie value can be edited per day, so a logged day can reflect what you actually ate instead of only the pre-planned meal.
 * **Dynamic Calorie Counter:** Calculates live consumed vs. target calorie totals based on checked items.
-* **External JSON Meal Config (`meals.json`):** Centralized file to easily edit meal names and calorie values without modifying application logic.
+* **Stats & Charts Page:** A dedicated `stats.html` page (built with [Chart.js](https://www.chartjs.org/)) charting weight vs. goal, body measurements, daily score trend, habit consistency, calories, weekly completion, and a progress-photo timeline.
+* **External JSON Meal Config (`meals.json`):** Centralized file to easily edit meal names, calorie values, and your height/weight profile without modifying application logic.
 * **100% Client-Side Privacy:** All user data stays in your browser — progress, measurements, and notes in `localStorage`, and photos as compressed blobs in `IndexedDB` (which has a much higher storage quota than `localStorage`).
 
 ---
@@ -28,10 +30,13 @@ A lightweight, mobile-responsive web application designed to track a structured 
 ## 📂 Project Structure
 
 ```text
-├── index.html     # Main HTML structure and UI layout
-├── styles.css     # Dark-mode UI styling and mobile-first CSS
-├── script.js     # State management, score calculation, and JSON fetch logic
-├── meals.json     # Editable database for breakfast, snacks, lunches, and dinners
+├── index.html     # Main tracker HTML structure and UI layout
+├── stats.html     # Stats & charts page (Chart.js)
+├── styles.css     # Dark-mode UI styling and mobile-first CSS, shared by both pages
+├── shared.js      # Data loading and score/calorie calculations shared by script.js and stats.js
+├── script.js      # Tracker page: rendering, state management, and user interactions
+├── stats.js       # Stats page: aggregates logged data and renders the charts
+├── meals.json     # Editable database for breakfast, snacks, lunches, dinners, and your profile
 └── README.md      # Project documentation
 ```
 
