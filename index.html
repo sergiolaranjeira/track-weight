@@ -5,11 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Transform">
+  <meta name="theme-color" content="#0b0f17">
   <title>10-Week Transformation Tracker</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
   <link rel="icon" href="files/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="files/apple-touch-icon.png">
   <link rel="stylesheet" href="css/styles.css">
   <script>
     const _profile = new URLSearchParams(location.search).get('profile') || 'default';
@@ -48,6 +52,7 @@
     <button class="qa-btn" onclick="openProfileSwitcher()">👤<span>Switch Profile</span></button>
     <button class="qa-btn" onclick="openLogEntryModal()">📏<span>Log Weight & Measures</span></button>
     <button class="qa-btn" onclick="exportData()">⬇️<span>Export Backup</span></button>
+    <button class="qa-btn" onclick="exportCSV()">📄<span>Export CSV</span></button>
     <button class="qa-btn" onclick="triggerImport()">⬆️<span>Import Backup</span></button>
     <input type="file" id="import-file-input" accept="application/json" style="display:none" onchange="onImportFileSelected(this)">
   </section>

@@ -22,6 +22,8 @@ A lightweight, mobile-responsive web application for tracking a structured weigh
   * **Progress Photo Upload:** Upload progress pictures directly from your mobile camera or gallery. Photos are automatically compressed and stored locally.
 * **Quick Actions:** One-tap access to the stats page, Settings, a "Log Weight & Measurements" form for any day in the plan, and backup export/import.
 * **Backup Export / Import:** Download your entire tracker (progress, notes, measurements, and photos) as a single JSON file, and restore it later or on another device.
+* **CSV Export:** Download a spreadsheet-ready CSV of every day's score, calories, completion, weight, and measurements — no code needed to analyze it in Excel or Sheets.
+* **Offline Support (PWA):** A service worker caches the app shell and `meals.json`, so the tracker keeps working without a connection, and "Add to Home Screen" installs a real standalone app with its own icon.
 * **Confirm Modals:** Destructive actions (Reset All, deleting a photo, importing a backup) ask for confirmation through an in-app modal.
 * **Exercise Logging:** Dedicated comment box for logging specific workouts (e.g., sets, reps, distance, or cardio duration).
 * **Editable Meals:** Each meal's description and calorie value can be edited per day to reflect what you actually ate.
@@ -59,6 +61,8 @@ Settings are saved to `localStorage` under the key `weightLossTrackerConfig`. Cl
 ├── index.html       # Main tracker — redirects to config.html on first visit
 ├── stats.html       # Stats & charts page (Chart.js)
 ├── config.html      # Settings / first-run setup page
+├── manifest.json    # PWA manifest (name, icons, standalone display)
+├── sw.js            # Service worker — caches the app shell + meals.json for offline use
 ├── css/
 │   └── styles.css   # Dark-mode UI styling shared by all pages
 ├── js/
@@ -67,8 +71,11 @@ Settings are saved to `localStorage` under the key `weightLossTrackerConfig`. Cl
 │   ├── stats.js     # Stats page: aggregates logged data and renders charts
 │   └── config.js    # Settings page: reads and writes APP_CONFIG to localStorage
 ├── files/
-│   ├── meals.json   # Weekly lunch/dinner rotation and fallback default meals
-│   └── favicon.svg
+│   ├── meals.json           # Weekly lunch/dinner rotation and fallback default meals
+│   ├── favicon.svg
+│   ├── icon-192.png          # PWA icon (192x192)
+│   ├── icon-512.png          # PWA icon (512x512)
+│   └── apple-touch-icon.png  # iOS home-screen icon (180x180)
 └── README.md        # Project documentation
 ```
 
@@ -106,6 +113,8 @@ Because browsers restrict reading external files (`meals.json`) via `file://` du
 Once deployed to a live URL, install it on your mobile device as a Progressive Web App (PWA):
 * **iOS (Safari):** Tap the **Share** button → Select **Add to Home Screen**.
 * **Android (Chrome):** Tap the three vertical dots → Select **Add to Home Screen** or **Install App**.
+
+The app installs with its own name, icon, and standalone window (`manifest.json`), and a service worker (`sw.js`) precaches the app shell and `meals.json` so it keeps working without a connection. Note: service workers require a real HTTPS deployment (or `localhost`) — they won't register when opened via a plain `file://` path.
 
 ---
 

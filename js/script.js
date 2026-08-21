@@ -549,6 +549,63 @@ async function exportData() {
   URL.revokeObjectURL(url);
 }
 
+// --- CSV export (daily scores, calories, and measurements) ---
+
+function escapeCsvField(value) {
+  if (value === null || value === undefined) return '';
+  const str = String(value);
+  return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+}
+
+function exportCSV() {
+  const headers = [
+    'Date', 'Week', 'Day', 'Score (0-10)', 'Calories Consumed', 'Calories Planned',
+    'Meals Completed', 'Steps Hit', 'Exercise Done',
+    'Weight (kg)', 'Waist (cm)', 'Chest (cm)', 'Quads (cm)',
+    'Exercise Notes', 'Daily Notes'
+  ];
+
+  const rows = getAllPlanDays().map(({ week, day }) => {
+    const stats = computeDayStats(week, day);
+    const d = stats.dayData;
+    const date = getActualDate(week, day);
+    const isoDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+    return [
+      isoDate,
+      week,
+      stats.dayName,
+      stats.score,
+      stats.dayConsumedCal,
+      stats.totalPlannedCal,
+      `${stats.completedCount}/${TASKS.length}`,
+      d.steps ? 'Yes' : 'No',
+      d.exercise ? 'Yes' : 'No',
+      d.weight || '',
+      d.waist || '',
+      d.chest || '',
+      d.quads || '',
+      d.ex_notes || '',
+      d.notes || ''
+    ];
+  });
+
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(escapeCsvField).join(','))
+    .join('\r\n');
+
+  // Leading BOM so Excel opens the UTF-8 file correctly instead of mangling accents.
+  const blob = new Blob([`﻿${csvContent}`], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `track-weight-data-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 function triggerImport() {
   document.getElementById('import-file-input').click();
 }

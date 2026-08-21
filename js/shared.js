@@ -1,6 +1,16 @@
 // Data loading and calculation logic shared between the tracker (script.js)
 // and the stats page (stats.js), so both stay in sync from one source of truth.
 
+// Registers the service worker (sw.js) that caches the app shell + meals.json
+// so the tracker keeps working offline and the home-screen install is complete.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch((err) => {
+      console.error("Service worker registration failed:", err);
+    });
+  });
+}
+
 // Profile — derived from ?profile= URL param. 'default' keeps original key names
 // so existing data is never broken. Named profiles get their own namespaced keys.
 const PROFILE_NAME = new URLSearchParams(window.location.search).get('profile') || 'default';
