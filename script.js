@@ -1,4 +1,5 @@
 let MEAL_CONFIG = {
+  profile: { heightM: 1.93, startWeightKg: 94, goalWeightKg: 85 },
   defaultBreakfast: { name: "2 Boiled Eggs", cal: 140 },
   defaultSnack1: { name: "Protein Shake OR 40g Jerky", cal: 150 },
   defaultSnack2: { name: "Cottage Cheese OR Edamame", cal: 150 },
@@ -37,11 +38,18 @@ let userState = {};
 
 document.addEventListener("DOMContentLoaded", async () => {
   await fetchMealsJSON();
+  renderProfileSubtitle();
   loadState();
   renderWeekSelector();
   renderCurrentWeek();
   updateOverallProgress();
 });
+
+function renderProfileSubtitle() {
+  const { heightM, startWeightKg, goalWeightKg } = MEAL_CONFIG.profile;
+  document.getElementById("app-subtitle").textContent =
+    `Personalized tracker for a ${heightM}m height profile, going from ${startWeightKg}kg to ${goalWeightKg}kg. Features Mon-Sun weekly views, exercise logs, Sunday progress photos, and weighted 0-10 daily quality scores.`;
+}
 
 async function fetchMealsJSON() {
   try {
