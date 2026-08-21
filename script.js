@@ -3,6 +3,7 @@ let activeObjectUrls = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
   await fetchMealsJSON();
+  loadConfig();
   renderProfileSubtitle();
   loadState();
   try {
@@ -133,6 +134,12 @@ function renderProfileSubtitle() {
   const { heightM, startWeightKg, goalWeightKg } = MEAL_CONFIG.profile;
   document.getElementById("app-subtitle").textContent =
     `Personalized tracker for a ${heightM}m height profile, going from ${startWeightKg}kg to ${goalWeightKg}kg. Features Mon-Sun weekly views, exercise logs, Sunday progress photos, and weighted 0-10 daily quality scores.`;
+  const badge = document.querySelector(".brand-badge");
+  if (badge) {
+    const startDate = getStartDate();
+    const dateStr = startDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    badge.textContent = `Start Date: ${dateStr} • Mon-Sun Calendar`;
+  }
 }
 
 function saveState() {
@@ -176,7 +183,7 @@ function renderCurrentWeek() {
   const grid = document.getElementById("days-grid-container");
   grid.innerHTML = "";
 
-  const startDayIndex = (currentWeek === 1) ? 2 : 0;
+  const startDayIndex = (currentWeek === 1) ? getWeek1StartDayIndex() : 0;
 
   for (let d = startDayIndex; d < 7; d++) {
     const stats = computeDayStats(currentWeek, d);
@@ -189,8 +196,8 @@ function renderCurrentWeek() {
       : `<span class="rest-tag">Active Recovery Walk / Rest</span>`;
 
     let scoreClass = "score-low";
-    if (dayScore >= 8.5) scoreClass = "score-high";
-    else if (dayScore >= 6.0) scoreClass = "score-mid";
+    if (dayScore >= APP_CONFIG.scoring.highThreshold) scoreClass = "score-high";
+    else if (dayScore >= APP_CONFIG.scoring.midThreshold) scoreClass = "score-mid";
 
     const card = document.createElement("div");
     card.className = `day-card ${isFullyDone ? "completed-day" : ""}`;
