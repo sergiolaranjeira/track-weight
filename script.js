@@ -132,6 +132,39 @@ async function hydratePhotos() {
   }
 }
 
+// Resolves a meal's effective name/calories for one day, preferring a per-day
+// override (set via the editable fields) over the meals.json plan default.
+function getEffectiveMeal(dayData, taskId, defaultName, defaultCal, isCheat = false) {
+  const nameOverride = dayData[`${taskId}_name`];
+  const calOverride = dayData[`${taskId}_cal`];
+  const name = (nameOverride !== undefined && nameOverride !== '') ? nameOverride : defaultName;
+  const cal = (calOverride !== undefined && calOverride !== '') ? Number(calOverride) : defaultCal;
+  return { name, cal: isNaN(cal) ? 0 : cal, isCheat };
+}
+
+function updateMealOverride(dayKey, taskId, field, value) {
+  if (!userState[dayKey]) userState[dayKey] = {};
+  const key = field === 'cal' ? `${taskId}_cal` : `${taskId}_name`;
+
+  if (field === 'cal') {
+    const num = parseFloat(value);
+    if (value === '' || isNaN(num)) {
+      delete userState[dayKey][key];
+    } else {
+      userState[dayKey][key] = Math.max(0, num);
+    }
+  } else {
+    if (value.trim() === '') {
+      delete userState[dayKey][key];
+    } else {
+      userState[dayKey][key] = value;
+    }
+  }
+
+  saveState();
+  renderCurrentWeek();
+}
+
 function renderProfileSubtitle() {
   const { heightM, startWeightKg, goalWeightKg } = MEAL_CONFIG.profile;
   document.getElementById("app-subtitle").textContent =
@@ -266,14 +299,20 @@ function renderCurrentWeek() {
       ? `<span class="workout-tag">30-Min Workout</span>` 
       : `<span class="rest-tag">Active Recovery Walk / Rest</span>`;
 
-    let dayConsumedCal = 0;
-    if (dayData.m1) dayConsumedCal += MEAL_CONFIG.defaultBreakfast.cal;
-    if (dayData.m2) dayConsumedCal += MEAL_CONFIG.defaultSnack1.cal;
-    if (dayData.m3) dayConsumedCal += lunchObj.cal;
-    if (dayData.m4) dayConsumedCal += MEAL_CONFIG.defaultSnack2.cal;
-    if (dayData.m5) dayConsumedCal += dinnerObj.cal;
+    const breakfast = getEffectiveMeal(dayData, 'm1', MEAL_CONFIG.defaultBreakfast.name, MEAL_CONFIG.defaultBreakfast.cal);
+    const snack1 = getEffectiveMeal(dayData, 'm2', MEAL_CONFIG.defaultSnack1.name, MEAL_CONFIG.defaultSnack1.cal);
+    const lunch = getEffectiveMeal(dayData, 'm3', lunchObj.name, lunchObj.cal);
+    const snack2 = getEffectiveMeal(dayData, 'm4', MEAL_CONFIG.defaultSnack2.name, MEAL_CONFIG.defaultSnack2.cal);
+    const dinner = getEffectiveMeal(dayData, 'm5', dinnerObj.name, dinnerObj.cal, dinnerObj.isCheat);
 
-    const totalPlannedCal = MEAL_CONFIG.defaultBreakfast.cal + MEAL_CONFIG.defaultSnack1.cal + lunchObj.cal + MEAL_CONFIG.defaultSnack2.cal + dinnerObj.cal;
+    let dayConsumedCal = 0;
+    if (dayData.m1) dayConsumedCal += breakfast.cal;
+    if (dayData.m2) dayConsumedCal += snack1.cal;
+    if (dayData.m3) dayConsumedCal += lunch.cal;
+    if (dayData.m4) dayConsumedCal += snack2.cal;
+    if (dayData.m5) dayConsumedCal += dinner.cal;
+
+    const totalPlannedCal = breakfast.cal + snack1.cal + lunch.cal + snack2.cal + dinner.cal;
     const completedCount = TASKS.filter(k => dayData[k]).length;
     const isFullyDone = completedCount === TASKS.length;
     const dateStr = getFormattedDate(currentWeek, d);
@@ -338,11 +377,11 @@ function renderCurrentWeek() {
         </div>
         
         <div class="checklist">
-          ${renderCheckItem(dayKey, 'm1', dayData.m1, 'Breakfast', MEAL_CONFIG.defaultBreakfast.name, MEAL_CONFIG.defaultBreakfast.cal)}
-          ${renderCheckItem(dayKey, 'm2', dayData.m2, 'Morning Snack', MEAL_CONFIG.defaultSnack1.name, MEAL_CONFIG.defaultSnack1.cal)}
-          ${renderCheckItem(dayKey, 'm3', dayData.m3, 'Lunch (Full Meal)', lunchObj.name, lunchObj.cal)}
-          ${renderCheckItem(dayKey, 'm4', dayData.m4, 'Afternoon Snack', MEAL_CONFIG.defaultSnack2.name, MEAL_CONFIG.defaultSnack2.cal)}
-          ${renderCheckItem(dayKey, 'm5', dayData.m5, dinnerObj.isCheat ? 'Dinner (Cheat Meal 🎉)' : 'Dinner (½ Meal + Yogurt)', dinnerObj.name, dinnerObj.cal, dinnerObj.isCheat)}
+          ${renderCheckItem(dayKey, 'm1', dayData.m1, 'Breakfast', breakfast.name, breakfast.cal, false, true)}
+          ${renderCheckItem(dayKey, 'm2', dayData.m2, 'Morning Snack', snack1.name, snack1.cal, false, true)}
+          ${renderCheckItem(dayKey, 'm3', dayData.m3, 'Lunch (Full Meal)', lunch.name, lunch.cal, false, true)}
+          ${renderCheckItem(dayKey, 'm4', dayData.m4, 'Afternoon Snack', snack2.name, snack2.cal, false, true)}
+          ${renderCheckItem(dayKey, 'm5', dayData.m5, dinnerObj.isCheat ? 'Dinner (Cheat Meal 🎉)' : 'Dinner (½ Meal + Yogurt)', dinner.name, dinner.cal, dinnerObj.isCheat, true)}
           ${renderCheckItem(dayKey, 'steps', dayData.steps, '10,000 Steps', 'Daily movement goal', 0)}
           
           ${renderCheckItem(dayKey, 'exercise', dayData.exercise, 'Exercise Routine', exerciseText, 0)}
@@ -366,8 +405,21 @@ function renderCurrentWeek() {
   hydratePhotos();
 }
 
-function renderCheckItem(dayKey, taskId, isChecked, title, desc, cal, isCheat = false) {
-  const calLabel = cal > 0 ? `<span class="item-cal ${isCheat ? 'cheat-tag' : ''}">${isCheat ? '~' + cal : '+' + cal} kcal</span>` : '';
+function escapeAttr(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+
+function renderCheckItem(dayKey, taskId, isChecked, title, desc, cal, isCheat = false, editable = false) {
+  const calField = editable
+    ? `<input type="number" class="item-cal-input ${isCheat ? 'cheat-tag' : ''}" value="${cal}" min="0" step="5"
+         onclick="event.stopPropagation()" onchange="updateMealOverride('${dayKey}', '${taskId}', 'cal', this.value)" aria-label="${escapeAttr(title)} calories">`
+    : (cal > 0 ? `<span class="item-cal ${isCheat ? 'cheat-tag' : ''}">${isCheat ? '~' + cal : '+' + cal} kcal</span>` : '');
+
+  const descField = editable
+    ? `<input type="text" class="item-desc-input" value="${escapeAttr(desc)}"
+         onclick="event.stopPropagation()" onchange="updateMealOverride('${dayKey}', '${taskId}', 'name', this.value)" aria-label="${escapeAttr(title)} description">`
+    : `<span class="item-desc">${desc}</span>`;
+
   return `
     <label class="check-item" onclick="event.stopPropagation();">
       <input type="checkbox" id="${dayKey}_${taskId}" ${isChecked ? "checked" : ""} onchange="toggleTask('${dayKey}', '${taskId}')">
@@ -375,9 +427,9 @@ function renderCheckItem(dayKey, taskId, isChecked, title, desc, cal, isCheat = 
       <span class="item-content">
         <span class="item-title">
           <span>${title}</span>
-          ${calLabel}
+          ${calField}
         </span>
-        <span class="item-desc">${desc}</span>
+        ${descField}
       </span>
     </label>
   `;

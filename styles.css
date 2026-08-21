@@ -333,6 +333,43 @@ h1 {
 
 .item-desc { font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.1rem; }
 
+.item-cal-input,
+.item-desc-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed var(--card-border);
+  color: inherit;
+  font-family: var(--font);
+  padding: 0 0 1px 0;
+  outline: none;
+  border-radius: 0;
+}
+
+.item-cal-input:focus,
+.item-desc-input:focus {
+  border-bottom-color: var(--accent);
+}
+
+.item-cal-input {
+  width: 4.2rem;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  -moz-appearance: textfield;
+}
+
+.item-cal-input.cheat-tag { color: var(--purple); }
+
+.item-desc-input {
+  display: block;
+  width: 100%;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
 .exercise-comment-box {
   margin-top: 0.25rem;
   margin-left: 2rem;
