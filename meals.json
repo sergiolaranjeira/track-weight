@@ -1,4 +1,5 @@
 {
+  "profile": { "heightM": 1.93, "startWeightKg": 94, "goalWeightKg": 85 },
   "defaultBreakfast": { "name": "2 Boiled Eggs", "cal": 140 },
   "defaultSnack1": { "name": "Protein Shake OR 40g Jerky", "cal": 150 },
   "defaultSnack2": { "name": "Cottage Cheese OR Edamame", "cal": 150 },
